@@ -197,6 +197,7 @@ export type Database = {
         Args: { description: string }
         Returns: Database["public"]["Enums"]["priority"]
       }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       category:
