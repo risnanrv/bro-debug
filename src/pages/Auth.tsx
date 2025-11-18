@@ -5,19 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 
 const signupSchema = z.object({
-  fullName: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  phone: z.string().min(10, 'Invalid phone number'),
-  batchName: z.string().min(1, 'Batch name is required'),
-  learningTrack: z.string().min(1, 'Learning track is required'),
-  mode: z.string().min(1, 'Mode is required'),
-  location: z.string().min(1, 'Location is required'),
+  fullName: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be less than 100 characters'),
+  email: z.string().email('Invalid email address').max(255, 'Email must be less than 255 characters'),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(100, 'Password must be less than 100 characters'),
 });
 
 const loginSchema = z.object({
@@ -35,11 +29,6 @@ export default function Auth() {
     fullName: '',
     email: '',
     password: '',
-    phone: '',
-    batchName: '',
-    learningTrack: '',
-    mode: '',
-    location: '',
   });
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -138,25 +127,9 @@ export default function Auth() {
       }
 
       if (data.user) {
-        // Update profile with additional details
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            phone: formData.phone,
-            batch_name: formData.batchName,
-            learning_track: formData.learningTrack as any,
-            mode: formData.mode as any,
-            location: formData.location as any,
-          })
-          .eq('id', data.user.id);
-
-        if (profileError) {
-          console.error('Profile update error:', profileError);
-        }
-
         toast({
           title: 'Account created!',
-          description: 'Welcome to BroDebug Support',
+          description: 'Welcome to BroDebug Support. Please complete your profile.',
         });
 
         navigate('/dashboard');
@@ -186,18 +159,16 @@ export default function Auth() {
         <CardContent>
           <form onSubmit={isLogin ? handleLogin : handleSignup} className="space-y-4">
             {!isLogin && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    required
-                  />
-                </div>
-              </>
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  required
+                />
+              </div>
             )}
 
             <div className="space-y-2">
@@ -221,94 +192,6 @@ export default function Auth() {
                 required
               />
             </div>
-
-            {!isLogin && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="batchName">Batch Name</Label>
-                  <Input
-                    id="batchName"
-                    type="text"
-                    placeholder="e.g., Kochi Batch 22"
-                    value={formData.batchName}
-                    onChange={(e) => setFormData({ ...formData, batchName: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="learningTrack">Learning Track</Label>
-                  <Select
-                    value={formData.learningTrack}
-                    onValueChange={(value) => setFormData({ ...formData, learningTrack: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select track" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Web Dev">Web Dev</SelectItem>
-                      <SelectItem value="Mobile">Mobile</SelectItem>
-                      <SelectItem value="Cybersecurity">Cybersecurity</SelectItem>
-                      <SelectItem value="AI">AI</SelectItem>
-                      <SelectItem value="Game Dev">Game Dev</SelectItem>
-                      <SelectItem value="Blockchain">Blockchain</SelectItem>
-                      <SelectItem value="Data Science">Data Science</SelectItem>
-                      <SelectItem value="AR/VR">AR/VR</SelectItem>
-                      <SelectItem value="Software Testing">Software Testing</SelectItem>
-                      <SelectItem value="DevOps">DevOps</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="mode">Mode</Label>
-                  <Select
-                    value={formData.mode}
-                    onValueChange={(value) => setFormData({ ...formData, mode: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select mode" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Offline">Offline</SelectItem>
-                      <SelectItem value="Online">Online</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="location">Brototype Location</Label>
-                  <Select
-                    value={formData.location}
-                    onValueChange={(value) => setFormData({ ...formData, location: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select location" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Kochi">Kochi</SelectItem>
-                      <SelectItem value="Calicut">Calicut</SelectItem>
-                      <SelectItem value="Trivandrum">Trivandrum</SelectItem>
-                      <SelectItem value="Bangalore">Bangalore</SelectItem>
-                      <SelectItem value="Coimbatore">Coimbatore</SelectItem>
-                      <SelectItem value="Chennai">Chennai</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-              </SelectContent>
-                </Select>
-              </div>
-            </>
-          )}
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Please wait...' : isLogin ? 'Login' : 'Sign Up'}
