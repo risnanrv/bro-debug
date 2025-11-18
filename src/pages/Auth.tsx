@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
 
@@ -29,7 +28,6 @@ const loginSchema = z.object({
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -117,7 +115,7 @@ export default function Auth() {
           emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
             full_name: formData.fullName,
-            role: isAdmin ? 'admin' : 'student',
+            role: 'student',
           },
         },
       });
@@ -306,22 +304,8 @@ export default function Auth() {
                       <SelectItem value="Coimbatore">Coimbatore</SelectItem>
                       <SelectItem value="Chennai">Chennai</SelectItem>
                       <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
+              </SelectContent>
                 </Select>
-              </div>
-
-              <div className="flex items-center space-x-2 border border-border rounded-md p-3 bg-muted/50">
-                <Checkbox 
-                  id="isAdmin" 
-                  checked={isAdmin}
-                  onCheckedChange={(checked) => setIsAdmin(checked as boolean)}
-                />
-                <Label 
-                  htmlFor="isAdmin" 
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  Create admin account (for testing)
-                </Label>
               </div>
             </>
           )}
