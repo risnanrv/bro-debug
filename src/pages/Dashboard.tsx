@@ -35,7 +35,30 @@ export default function Dashboard() {
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      setComplaints(data);
+      // Sort complaints by priority and status
+      const sortedComplaints = data.sort((a, b) => {
+        const statusOrder: Record<string, number> = {
+          'Escalated': 1,
+          'In Progress': 2,
+          'Pending': 3,
+          'Resolved': 4,
+          'Closed': 5,
+        };
+        const priorityOrder: Record<string, number> = {
+          'Critical': 1,
+          'Urgent': 2,
+          'Normal': 3,
+        };
+
+        // First sort by status
+        const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+        if (statusDiff !== 0) return statusDiff;
+
+        // Then by priority
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+      });
+
+      setComplaints(sortedComplaints);
     }
     setLoadingComplaints(false);
   };
@@ -151,34 +174,38 @@ export default function Dashboard() {
               ) : (
                 <div className="space-y-4">
                   {complaints.map((complaint) => (
-                    <Card
-                      key={complaint.id}
-                      className="cursor-pointer hover-lift"
-                      onClick={() => navigate(`/complaint/${complaint.id}`)}
-                    >
-                      <CardContent className="pt-6">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-semibold text-lg">{complaint.title}</h3>
-                          <div className="flex gap-2">
-                            <Badge className={getPriorityColor(complaint.priority)}>
-                              {complaint.priority}
-                            </Badge>
-                            <Badge className={getStatusColor(complaint.status)}>
-                              {complaint.status}
-                            </Badge>
-                          </div>
+                  <Card
+                    key={complaint.id}
+                    className={`cursor-pointer hover-lift ${
+                      complaint.status === 'Resolved' || complaint.status === 'Closed'
+                        ? 'opacity-60'
+                        : ''
+                    }`}
+                    onClick={() => navigate(`/complaint/${complaint.id}`)}
+                  >
+                    <CardContent className="pt-6">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-semibold text-lg">{complaint.title}</h3>
+                        <div className="flex gap-2">
+                          <Badge className={getPriorityColor(complaint.priority)}>
+                            {complaint.priority}
+                          </Badge>
+                          <Badge className={getStatusColor(complaint.status)}>
+                            {complaint.status}
+                          </Badge>
                         </div>
-                        <p className="text-muted-foreground text-sm mb-2">
-                          {complaint.description.substring(0, 100)}
-                          {complaint.description.length > 100 ? '...' : ''}
-                        </p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>{complaint.category}</span>
-                          <span>•</span>
-                          <span>{new Date(complaint.created_at).toLocaleDateString()}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                      <p className="text-muted-foreground text-sm mb-2">
+                        {complaint.description.substring(0, 100)}
+                        {complaint.description.length > 100 ? '...' : ''}
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span>{complaint.custom_category_text || complaint.category}</span>
+                        <span>•</span>
+                        <span>{new Date(complaint.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
                   ))}
                 </div>
               )}

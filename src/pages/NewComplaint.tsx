@@ -30,6 +30,7 @@ export default function NewComplaint() {
     title: '',
     category: '',
     description: '',
+    customCategory: '',
   });
 
   const detectPriority = (description: string): string => {
@@ -57,6 +58,7 @@ export default function NewComplaint() {
         student_name_cached: isAnonymous ? 'Anonymous Student' : profile?.full_name,
         title: formData.title,
         category: formData.category as any,
+        custom_category_text: formData.category === 'Other' ? formData.customCategory : null,
         description: formData.description,
         priority: priority as any,
         status: 'Pending' as any,
@@ -144,24 +146,39 @@ export default function NewComplaint() {
                 <Label htmlFor="category">Category</Label>
                 <Select
                   value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
+                  onValueChange={(value) => setFormData({ ...formData, category: value, customCategory: '' })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Hostel / Accommodation">Hostel / Accommodation</SelectItem>
-                    <SelectItem value="Mentor Behavior">Mentor Behavior</SelectItem>
+                    <SelectItem value="Mentor Behavior / Staff Attitude">Mentor Behavior / Staff Attitude</SelectItem>
                     <SelectItem value="Curriculum / Teaching">Curriculum / Teaching</SelectItem>
-                    <SelectItem value="Technical Support">Technical Support</SelectItem>
-                    <SelectItem value="Laptop / Lab Issue">Laptop / Lab Issue</SelectItem>
-                    <SelectItem value="Payment & Finance">Payment & Finance</SelectItem>
+                    <SelectItem value="Batch Management">Batch Management</SelectItem>
+                    <SelectItem value="Laptop / Lab / Internet / Wi-Fi Issue">Laptop / Lab / Internet / Wi-Fi Issue</SelectItem>
+                    <SelectItem value="Payment / Finance">Payment / Finance</SelectItem>
                     <SelectItem value="Food / Canteen">Food / Canteen</SelectItem>
-                    <SelectItem value="Mental Health / Harassment">Mental Health / Harassment</SelectItem>
+                    <SelectItem value="Mental Health / Harassment / Bullying">Mental Health / Harassment / Bullying</SelectItem>
+                    <SelectItem value="Miscommunication / Misleading Information">Miscommunication / Misleading Information</SelectItem>
+                    <SelectItem value="Personal Safety">Personal Safety</SelectItem>
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {formData.category === 'Other' && (
+                <div className="space-y-2">
+                  <Label htmlFor="customCategory">Specify Category</Label>
+                  <Input
+                    id="customCategory"
+                    placeholder="Please specify the category"
+                    value={formData.customCategory}
+                    onChange={(e) => setFormData({ ...formData, customCategory: e.target.value })}
+                    required
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
