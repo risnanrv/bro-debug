@@ -73,6 +73,7 @@ export type Database = {
           category: Database["public"]["Enums"]["category"]
           closed_at: string | null
           created_at: string
+          custom_category_text: string | null
           description: string
           id: string
           is_anonymous: boolean
@@ -89,6 +90,7 @@ export type Database = {
           category: Database["public"]["Enums"]["category"]
           closed_at?: string | null
           created_at?: string
+          custom_category_text?: string | null
           description: string
           id?: string
           is_anonymous?: boolean
@@ -105,6 +107,7 @@ export type Database = {
           category?: Database["public"]["Enums"]["category"]
           closed_at?: string | null
           created_at?: string
+          custom_category_text?: string | null
           description?: string
           id?: string
           is_anonymous?: boolean
@@ -260,13 +263,15 @@ export type Database = {
       app_role: "admin" | "student"
       category:
         | "Hostel / Accommodation"
-        | "Mentor Behavior"
+        | "Mentor Behavior / Staff Attitude"
         | "Curriculum / Teaching"
-        | "Technical Support"
-        | "Laptop / Lab Issue"
-        | "Payment & Finance"
+        | "Batch Management"
+        | "Laptop / Lab / Internet / Wi-Fi Issue"
+        | "Payment / Finance"
         | "Food / Canteen"
-        | "Mental Health / Harassment"
+        | "Mental Health / Harassment / Bullying"
+        | "Miscommunication / Misleading Information"
+        | "Personal Safety"
         | "Other"
       complaint_status:
         | "Pending"
@@ -428,13 +433,15 @@ export const Constants = {
       app_role: ["admin", "student"],
       category: [
         "Hostel / Accommodation",
-        "Mentor Behavior",
+        "Mentor Behavior / Staff Attitude",
         "Curriculum / Teaching",
-        "Technical Support",
-        "Laptop / Lab Issue",
-        "Payment & Finance",
+        "Batch Management",
+        "Laptop / Lab / Internet / Wi-Fi Issue",
+        "Payment / Finance",
         "Food / Canteen",
-        "Mental Health / Harassment",
+        "Mental Health / Harassment / Bullying",
+        "Miscommunication / Misleading Information",
+        "Personal Safety",
         "Other",
       ],
       complaint_status: [

@@ -60,7 +60,30 @@ export default function AdminDashboard() {
     const { data, error } = await query;
 
     if (!error && data) {
-      setComplaints(data);
+      // Sort complaints by priority and status
+      const sortedComplaints = data.sort((a, b) => {
+        const statusOrder: Record<string, number> = {
+          'Escalated': 1,
+          'In Progress': 2,
+          'Pending': 3,
+          'Resolved': 4,
+          'Closed': 5,
+        };
+        const priorityOrder: Record<string, number> = {
+          'Critical': 1,
+          'Urgent': 2,
+          'Normal': 3,
+        };
+
+        // First sort by status
+        const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+        if (statusDiff !== 0) return statusDiff;
+
+        // Then by priority
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+      });
+
+      setComplaints(sortedComplaints);
       
       // Calculate stats
       const totalComplaints = data.length;
@@ -248,13 +271,15 @@ export default function AdminDashboard() {
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
                     <SelectItem value="Hostel / Accommodation">Hostel / Accommodation</SelectItem>
-                    <SelectItem value="Mentor Behavior">Mentor Behavior</SelectItem>
+                    <SelectItem value="Mentor Behavior / Staff Attitude">Mentor Behavior / Staff Attitude</SelectItem>
                     <SelectItem value="Curriculum / Teaching">Curriculum / Teaching</SelectItem>
-                    <SelectItem value="Technical Support">Technical Support</SelectItem>
-                    <SelectItem value="Laptop / Lab Issue">Laptop / Lab Issue</SelectItem>
-                    <SelectItem value="Payment & Finance">Payment & Finance</SelectItem>
+                    <SelectItem value="Batch Management">Batch Management</SelectItem>
+                    <SelectItem value="Laptop / Lab / Internet / Wi-Fi Issue">Laptop / Lab / Internet / Wi-Fi Issue</SelectItem>
+                    <SelectItem value="Payment / Finance">Payment / Finance</SelectItem>
                     <SelectItem value="Food / Canteen">Food / Canteen</SelectItem>
-                    <SelectItem value="Mental Health / Harassment">Mental Health / Harassment</SelectItem>
+                    <SelectItem value="Mental Health / Harassment / Bullying">Mental Health / Harassment / Bullying</SelectItem>
+                    <SelectItem value="Miscommunication / Misleading Information">Miscommunication / Misleading Information</SelectItem>
+                    <SelectItem value="Personal Safety">Personal Safety</SelectItem>
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -277,7 +302,11 @@ export default function AdminDashboard() {
                 {complaints.map((complaint) => (
                   <Card
                     key={complaint.id}
-                    className="cursor-pointer hover-lift"
+                    className={`cursor-pointer hover-lift ${
+                      complaint.status === 'Resolved' || complaint.status === 'Closed'
+                        ? 'opacity-60'
+                        : ''
+                    }`}
                     onClick={() => navigate(`/admin/complaint/${complaint.id}`)}
                   >
                     <CardContent className="pt-6">
@@ -302,7 +331,7 @@ export default function AdminDashboard() {
                         {complaint.description.length > 150 ? '...' : ''}
                       </p>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>{complaint.category}</span>
+                        <span>{complaint.custom_category_text || complaint.category}</span>
                         <span>•</span>
                         <span>{new Date(complaint.created_at).toLocaleDateString()}</span>
                       </div>
