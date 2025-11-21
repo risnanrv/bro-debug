@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LogOut, Filter } from 'lucide-react';
+import { LogOut, Filter, Bell } from 'lucide-react';
 
 export default function AdminDashboard() {
   const { user, profile, signOut, loading } = useAuth();
@@ -119,9 +119,18 @@ export default function AdminDashboard() {
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-          <Button variant="ghost" size="icon" onClick={signOut}>
-            <LogOut className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/admin/announcements')}
+            >
+              <Bell className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={signOut}>
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </header>
 

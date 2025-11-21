@@ -5,13 +5,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, LogOut, User } from 'lucide-react';
+import { Plus, LogOut, User, Bell } from 'lucide-react';
 
 export default function Dashboard() {
   const { user, profile, signOut, loading } = useAuth();
   const navigate = useNavigate();
   const [complaints, setComplaints] = useState<any[]>([]);
   const [loadingComplaints, setLoadingComplaints] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -22,6 +23,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (user) {
       fetchComplaints();
+      fetchUnreadCount();
     }
   }, [user]);
 
@@ -36,6 +38,23 @@ export default function Dashboard() {
       setComplaints(data);
     }
     setLoadingComplaints(false);
+  };
+
+  const fetchUnreadCount = async () => {
+    const { data: announcements } = await supabase
+      .from('announcements')
+      .select('id');
+
+    const { data: reads } = await supabase
+      .from('announcement_reads')
+      .select('announcement_id')
+      .eq('student_id', user?.id);
+
+    if (announcements && reads) {
+      const readIds = new Set(reads.map((r) => r.announcement_id));
+      const unread = announcements.filter((a) => !readIds.has(a.id)).length;
+      setUnreadCount(unread);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -78,6 +97,22 @@ export default function Dashboard() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold">BroDebug Support</h1>
           <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/updates')}
+              className="relative"
+            >
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                >
+                  {unreadCount}
+                </Badge>
+              )}
+            </Button>
             <Button variant="ghost" size="icon" onClick={() => navigate('/profile')}>
               <User className="h-5 w-5" />
             </Button>

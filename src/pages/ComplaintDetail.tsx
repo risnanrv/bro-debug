@@ -192,13 +192,13 @@ export default function ComplaintDetail() {
               <>
                 <Separator />
                 <div>
-                  <h3 className="font-semibold mb-4">Resolution Updates</h3>
+                  <h3 className="font-semibold mb-4">Admin Responses</h3>
                   <div className="space-y-4">
                     {notes.map((note) => (
-                      <Card key={note.id}>
+                      <Card key={note.id} className="bg-muted/50">
                         <CardContent className="pt-6">
                           <p className="text-sm text-muted-foreground mb-2">
-                            {new Date(note.created_at).toLocaleString()}
+                            Admin • {new Date(note.created_at).toLocaleString()}
                           </p>
                           <p className="whitespace-pre-wrap">{note.message}</p>
                         </CardContent>

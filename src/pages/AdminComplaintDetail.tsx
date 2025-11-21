@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,11 +19,9 @@ export default function AdminComplaintDetail() {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [complaint, setComplaint] = useState<any>(null);
-  const [publicNotes, setPublicNotes] = useState<any[]>([]);
-  const [internalNotes, setInternalNotes] = useState<any[]>([]);
+  const [responses, setResponses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newNote, setNewNote] = useState('');
-  const [noteType, setNoteType] = useState<'public' | 'internal'>('public');
+  const [newResponse, setNewResponse] = useState('');
   const [newStatus, setNewStatus] = useState('');
   const [newPriority, setNewPriority] = useState('');
 
@@ -36,7 +34,7 @@ export default function AdminComplaintDetail() {
   useEffect(() => {
     if (id) {
       fetchComplaint();
-      fetchNotes();
+      fetchResponses();
     }
   }, [id]);
 
@@ -55,16 +53,16 @@ export default function AdminComplaintDetail() {
     setLoading(false);
   };
 
-  const fetchNotes = async () => {
+  const fetchResponses = async () => {
     const { data, error } = await supabase
       .from('resolution_notes')
       .select('*')
       .eq('complaint_id', id)
+      .eq('type', 'public')
       .order('created_at', { ascending: true });
 
     if (!error && data) {
-      setPublicNotes(data.filter(note => note.type === 'public'));
-      setInternalNotes(data.filter(note => note.type === 'internal'));
+      setResponses(data);
     }
   };
 
@@ -97,39 +95,62 @@ export default function AdminComplaintDetail() {
     fetchComplaint();
   };
 
-  const handleAddNote = async () => {
-    if (!newNote.trim()) {
+  const handleUpdateComplaint = async () => {
+    if (!newResponse.trim()) {
       toast({
         title: 'Error',
-        description: 'Note cannot be empty',
+        description: 'Response cannot be empty',
         variant: 'destructive',
       });
       return;
     }
 
-    const { error } = await supabase.from('resolution_notes').insert({
-      complaint_id: id,
-      admin_id: user?.id,
-      type: noteType,
-      message: newNote,
-    });
+    const updates: any = { status: newStatus, priority: newPriority };
+    
+    if (newStatus === 'Closed') {
+      updates.closed_at = new Date().toISOString();
+    }
 
-    if (error) {
+    // Update complaint
+    const { error: complaintError } = await supabase
+      .from('complaints')
+      .update(updates)
+      .eq('id', id);
+
+    if (complaintError) {
       toast({
         title: 'Error',
-        description: error.message,
+        description: complaintError.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Add response
+    const { error: responseError } = await supabase.from('resolution_notes').insert({
+      complaint_id: id,
+      admin_id: user?.id,
+      type: 'public',
+      message: newResponse,
+    });
+
+    if (responseError) {
+      toast({
+        title: 'Error',
+        description: responseError.message,
         variant: 'destructive',
       });
       return;
     }
 
     toast({
-      title: 'Note added',
-      description: `${noteType === 'public' ? 'Public' : 'Internal'} note has been added`,
+      title: 'Updated',
+      description: 'Complaint has been updated successfully',
     });
 
-    setNewNote('');
-    fetchNotes();
+    setNewResponse('');
+    fetchComplaint();
+    fetchResponses();
   };
 
   const getStatusColor = (status: string) => {
@@ -230,59 +251,33 @@ export default function AdminComplaintDetail() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Notes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="public">
-                  <TabsList className="grid w-full grid-cols-2 mb-4">
-                    <TabsTrigger value="public">Public Notes ({publicNotes.length})</TabsTrigger>
-                    <TabsTrigger value="internal">Internal Notes ({internalNotes.length})</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="public" className="space-y-4">
-                    {publicNotes.length === 0 ? (
-                      <p className="text-muted-foreground text-sm">No public notes yet</p>
-                    ) : (
-                      publicNotes.map((note) => (
-                        <Card key={note.id}>
-                          <CardContent className="pt-6">
-                            <p className="text-xs text-muted-foreground mb-2">
-                              {new Date(note.created_at).toLocaleString()}
-                            </p>
-                            <p className="whitespace-pre-wrap">{note.message}</p>
-                          </CardContent>
-                        </Card>
-                      ))
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="internal" className="space-y-4">
-                    {internalNotes.length === 0 ? (
-                      <p className="text-muted-foreground text-sm">No internal notes yet</p>
-                    ) : (
-                      internalNotes.map((note) => (
-                        <Card key={note.id}>
-                          <CardContent className="pt-6">
-                            <p className="text-xs text-muted-foreground mb-2">
-                              {new Date(note.created_at).toLocaleString()}
-                            </p>
-                            <p className="whitespace-pre-wrap">{note.message}</p>
-                          </CardContent>
-                        </Card>
-                      ))
-                    )}
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
+            {responses.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Previous Responses</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {responses.map((response) => (
+                      <Card key={response.id}>
+                        <CardContent className="pt-6">
+                          <p className="text-xs text-muted-foreground mb-2">
+                            {new Date(response.created_at).toLocaleString()}
+                          </p>
+                          <p className="whitespace-pre-wrap">{response.message}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Update Status</CardTitle>
+                <CardTitle>Update Complaint</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -315,45 +310,18 @@ export default function AdminComplaintDetail() {
                   </Select>
                 </div>
 
-                <Button onClick={handleUpdateStatus} className="w-full">
-                  Update Status & Priority
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Add Note</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Note Type</Label>
-                  <Select
-                    value={noteType}
-                    onValueChange={(value: 'public' | 'internal') => setNoteType(value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="public">Public (visible to student)</SelectItem>
-                      <SelectItem value="internal">Internal (admin only)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Message</Label>
+                  <Label>Response / Instruction for Student</Label>
                   <Textarea
-                    value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
-                    placeholder="Add a note..."
-                    className="min-h-[120px]"
+                    value={newResponse}
+                    onChange={(e) => setNewResponse(e.target.value)}
+                    placeholder="Type your response to the student..."
+                    className="min-h-[150px]"
                   />
                 </div>
 
-                <Button onClick={handleAddNote} className="w-full">
-                  Add Note
+                <Button onClick={handleUpdateComplaint} className="w-full">
+                  Update & Send Response
                 </Button>
               </CardContent>
             </Card>
