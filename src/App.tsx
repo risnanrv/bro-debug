@@ -11,6 +11,8 @@ import NewComplaint from "./pages/NewComplaint";
 import ComplaintDetail from "./pages/ComplaintDetail";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminComplaintDetail from "./pages/AdminComplaintDetail";
+import AdminAnnouncements from "./pages/AdminAnnouncements";
+import StudentUpdates from "./pages/StudentUpdates";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
@@ -29,8 +31,10 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/complaint/new" element={<NewComplaint />} />
             <Route path="/complaint/:id" element={<ComplaintDetail />} />
+            <Route path="/updates" element={<StudentUpdates />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/complaint/:id" element={<AdminComplaintDetail />} />
+            <Route path="/admin/announcements" element={<AdminAnnouncements />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
