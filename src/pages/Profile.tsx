@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Upload } from 'lucide-react';
+import Header from '@/components/Header';
 
 export default function Profile() {
   const { profile } = useAuth();
@@ -126,10 +127,13 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
+      <Header role="student" />
+      
+      <div className="border-b border-border bg-card/50">
+        <div className="container mx-auto px-4 py-3">
           <Button
             variant="ghost"
+            size="sm"
             onClick={() => navigate('/dashboard')}
             className="gap-2"
           >
@@ -137,22 +141,32 @@ export default function Profile() {
             Back to Dashboard
           </Button>
         </div>
-      </header>
+      </div>
 
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
-        <Card>
+      <main className="container mx-auto px-4 py-12 max-w-3xl">
+        <Card className="gradient-card border-border/50 shadow-xl">
           <CardHeader>
-            <CardTitle className="text-2xl">Profile Settings</CardTitle>
+            <CardTitle className="text-3xl">Profile <span className="text-primary">Settings</span></CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="flex flex-col items-center gap-4 mb-6">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={profile.profile_photo_url || ''} />
-                  <AvatarFallback className="text-2xl">
-                    {profile.full_name?.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+              <div className="flex flex-col items-center gap-4 mb-8">
+                <div className="relative group">
+                  <Avatar className="h-32 w-32 border-4 border-primary/20">
+                    <AvatarImage src={profile.profile_photo_url || undefined} />
+                    <AvatarFallback className="text-4xl">
+                      {profile.full_name?.charAt(0) || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    disabled={uploading}
+                  >
+                    <Upload className="h-8 w-8 text-white" />
+                  </button>
+                </div>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -160,20 +174,12 @@ export default function Profile() {
                   onChange={handlePhotoUpload}
                   className="hidden"
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  className="gap-2"
-                >
-                  <Upload className="h-4 w-4" />
-                  {uploading ? 'Uploading...' : 'Upload Photo'}
-                </Button>
+                <p className="text-sm text-muted-foreground">
+                  {uploading ? 'Uploading...' : 'Click to upload profile photo'}
+                </p>
               </div>
 
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Label htmlFor="full_name">Full Name</Label>
                 <Input
                   id="full_name"

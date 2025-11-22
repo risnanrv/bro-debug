@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import Header from '@/components/Header';
 
 export default function StudentUpdates() {
   const { user, profile, loading } = useAuth();
@@ -90,29 +91,22 @@ export default function StudentUpdates() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/dashboard')}
-            className="gap-2"
-          >
+      <Header role="student" />
+      
+      <div className="border-b border-border bg-card/50">
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
+            Back
           </Button>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold">Updates</h1>
-            {unreadCount > 0 && (
-              <Badge variant="destructive">{unreadCount}</Badge>
-            )}
-          </div>
+          <h1 className="text-xl font-bold">Updates {unreadCount > 0 && <Badge className="ml-2 bg-primary">{unreadCount}</Badge>}</h1>
         </div>
-      </header>
+      </div>
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <Card>
+      <main className="container mx-auto px-4 py-12 max-w-4xl">
+        <Card className="gradient-card border-border/50 shadow-xl">
           <CardHeader>
-            <CardTitle>Announcements</CardTitle>
+            <CardTitle className="text-2xl">Announcements</CardTitle>
           </CardHeader>
           <CardContent>
             {loadingAnnouncements ? (

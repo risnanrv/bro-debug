@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LogOut, Filter, Bell } from 'lucide-react';
+import Header from '@/components/Header';
 
 export default function AdminDashboard() {
   const { user, profile, signOut, loading } = useAuth();
@@ -139,87 +140,97 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/admin/announcements')}
-            >
-              <Bell className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={signOut}>
-              <LogOut className="h-5 w-5" />
-            </Button>
-          </div>
+      <Header role="admin" />
+      
+      <div className="border-b border-border bg-card/50">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-end gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/admin/announcements')}
+          >
+            <Bell className="h-4 w-4 mr-2" />
+            Announcements
+          </Button>
+          <Button variant="ghost" size="sm" onClick={signOut}>
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
+          </Button>
         </div>
-      </header>
+      </div>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-          <Card>
+      <main className="container mx-auto px-4 py-12 max-w-7xl">
+        <div className="mb-12">
+          <h2 className="text-4xl md:text-5xl font-bold mb-3">
+            Admin <span className="text-primary">Dashboard</span>
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            Monitor and resolve student complaints across Brototype
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+          <Card className="gradient-card border-border/50 hover-lift">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Complaints
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                Total
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{stats.total}</p>
+              <p className="text-4xl font-bold">{stats.total}</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="gradient-card border-border/50 hover-lift">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-medium text-accent uppercase tracking-wide">
                 Pending
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{stats.pending}</p>
+              <p className="text-4xl font-bold text-accent">{stats.pending}</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="gradient-card border-border/50 hover-lift">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-medium text-status-in-progress uppercase tracking-wide">
                 In Progress
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{stats.inProgress}</p>
+              <p className="text-4xl font-bold text-status-in-progress">{stats.inProgress}</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="gradient-card border-border/50 hover-lift">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-medium text-status-resolved uppercase tracking-wide">
                 Resolved
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{stats.resolved}</p>
+              <p className="text-4xl font-bold text-status-resolved">{stats.resolved}</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="gradient-card border-border/50 hover-lift">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-medium text-primary uppercase tracking-wide">
                 Escalated
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-destructive">{stats.escalated}</p>
+              <p className="text-4xl font-bold text-primary">{stats.escalated}</p>
             </CardContent>
           </Card>
         </div>
 
-        <Card className="mb-6">
+        <Card className="mb-6 gradient-card border-border/50">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
-              <CardTitle>Filters</CardTitle>
+              <CardTitle className="text-xl">Filters</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -288,50 +299,60 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="gradient-card border-border/50 shadow-xl">
           <CardHeader>
-            <CardTitle>All Complaints</CardTitle>
+            <CardTitle className="text-2xl">All Complaints</CardTitle>
           </CardHeader>
           <CardContent>
             {loadingComplaints ? (
               <p className="text-muted-foreground">Loading complaints...</p>
             ) : complaints.length === 0 ? (
-              <p className="text-muted-foreground">No complaints found</p>
+              <div className="text-center py-12">
+                <p className="text-muted-foreground text-lg">No complaints found with these filters</p>
+              </div>
             ) : (
               <div className="space-y-4">
                 {complaints.map((complaint) => (
                   <Card
                     key={complaint.id}
-                    className={`cursor-pointer hover-lift ${
+                    className={`cursor-pointer hover-lift border-border/50 transition-all ${
                       complaint.status === 'Resolved' || complaint.status === 'Closed'
-                        ? 'opacity-60'
-                        : ''
+                        ? 'opacity-50 hover:opacity-70'
+                        : 'hover:border-primary/50'
                     }`}
                     onClick={() => navigate(`/admin/complaint/${complaint.id}`)}
                   >
                     <CardContent className="pt-6">
-                      <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
-                          <h3 className="font-semibold text-lg mb-1">{complaint.title}</h3>
+                          <h3 className="font-bold text-xl mb-1">{complaint.title}</h3>
                           <p className="text-sm text-muted-foreground">
-                            By: {complaint.student_name_cached}
+                            By: <span className="font-medium">{complaint.student_name_cached}</span>
                           </p>
                         </div>
-                        <div className="flex gap-2">
-                          <Badge className={getPriorityColor(complaint.priority)}>
+                        <div className="flex gap-2 flex-shrink-0 ml-4">
+                          <Badge variant="outline" className="border-current" style={{
+                            color: complaint.priority === 'Critical' ? 'hsl(var(--primary))' :
+                                   complaint.priority === 'Urgent' ? 'hsl(var(--accent))' :
+                                   'hsl(var(--muted-foreground))'
+                          }}>
                             {complaint.priority}
                           </Badge>
-                          <Badge className={getStatusColor(complaint.status)}>
+                          <Badge variant="outline" className="border-current" style={{
+                            color: complaint.status === 'Escalated' ? 'hsl(var(--status-escalated))' :
+                                   complaint.status === 'In Progress' ? 'hsl(var(--status-in-progress))' :
+                                   complaint.status === 'Resolved' ? 'hsl(var(--status-resolved))' :
+                                   'hsl(var(--muted-foreground))'
+                          }}>
                             {complaint.status}
                           </Badge>
                         </div>
                       </div>
-                      <p className="text-muted-foreground text-sm mb-2">
-                        {complaint.description.substring(0, 150)}
-                        {complaint.description.length > 150 ? '...' : ''}
+                      <p className="text-muted-foreground mb-3 line-clamp-2">
+                        {complaint.description}
                       </p>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>{complaint.custom_category_text || complaint.category}</span>
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <span className="font-medium">{complaint.custom_category_text || complaint.category}</span>
                         <span>•</span>
                         <span>{new Date(complaint.created_at).toLocaleDateString()}</span>
                       </div>

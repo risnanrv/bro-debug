@@ -8,75 +8,53 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 5%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 5%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 5%;
-
-    --primary: 0 0% 0%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 5%;
-
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 5%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 0 0% 5%;
-
-    --radius: 0.75rem;
-
-    /* Status colors */
-    --status-pending: 0 0% 70%;
-    --status-in-progress: 0 0% 40%;
-    --status-resolved: 0 0% 20%;
-    --status-critical: 0 0% 10%;
-    --status-urgent: 0 0% 30%;
-
-    /* Transitions */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .dark {
-    --background: 0 0% 5%;
+    /* Brototype Dark Theme - Pure Black Background */
+    --background: 0 0% 0%;
     --foreground: 0 0% 100%;
 
-    --card: 0 0% 8%;
+    --card: 0 0% 7%;
     --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 8%;
+    --popover: 0 0% 7%;
     --popover-foreground: 0 0% 100%;
 
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 5%;
+    /* Red Accent - Brototype Brand Color */
+    --primary: 4 90% 58%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 15%;
+    --secondary: 0 0% 13%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 0 0% 13%;
+    --muted-foreground: 0 0% 70%;
 
-    --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 45 93% 58%;
+    --accent-foreground: 0 0% 0%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 0 0% 95%;
+    --input: 0 0% 13%;
+    --ring: 4 90% 58%;
+
+    --radius: 0.5rem;
+
+    /* Status colors - Brototype style */
+    --status-pending: 45 93% 58%;
+    --status-in-progress: 210 100% 60%;
+    --status-resolved: 142 71% 45%;
+    --status-critical: 4 90% 58%;
+    --status-urgent: 33 100% 50%;
+    --status-closed: 0 0% 50%;
+    --status-escalated: 280 100% 70%;
+
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(0 0% 0%) 0%, hsl(0 0% 5%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 7%) 0%, hsl(0 0% 10%) 100%);
   }
 }
 
@@ -88,10 +66,19 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
+    @apply font-bold tracking-tight;
+  }
+  
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl;
+  }
+  
+  h2 {
+    @apply text-3xl md:text-4xl;
   }
 }
 
@@ -101,6 +88,18 @@ All colors MUST be HSL.
   }
   
   .hover-lift {
-    @apply transition-smooth hover:-translate-y-0.5;
+    @apply transition-smooth hover:-translate-y-0.5 hover:shadow-lg;
+  }
+  
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+  
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
   }
 }
