@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
+import Header from '@/components/Header';
 
 const complaintSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters').max(200, 'Title too long'),
@@ -94,10 +95,13 @@ export default function NewComplaint() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
+      <Header role="student" />
+      
+      <div className="border-b border-border bg-card/50">
+        <div className="container mx-auto px-4 py-3">
           <Button
             variant="ghost"
+            size="sm"
             onClick={() => navigate('/dashboard')}
             className="gap-2"
           >
@@ -105,21 +109,21 @@ export default function NewComplaint() {
             Back to Dashboard
           </Button>
         </div>
-      </header>
+      </div>
 
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
-        <Card>
+      <main className="container mx-auto px-4 py-12 max-w-3xl">
+        <Card className="gradient-card border-border/50 shadow-xl">
           <CardHeader>
-            <CardTitle className="text-2xl">Submit New Complaint</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-3xl">Submit New <span className="text-primary">Complaint</span></CardTitle>
+            <CardDescription className="text-base">
               Describe your issue in detail. We'll prioritize and address it accordingly.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/20 border border-border">
                 <div className="space-y-0.5">
-                  <Label htmlFor="anonymous">Submit Anonymously</Label>
+                  <Label htmlFor="anonymous" className="text-base font-medium">Submit Anonymously</Label>
                   <p className="text-sm text-muted-foreground">
                     Your name will be hidden from display
                   </p>

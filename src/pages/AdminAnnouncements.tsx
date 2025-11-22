@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import Header from '@/components/Header';
 
 export default function AdminAnnouncements() {
   const { profile, loading } = useAuth();
@@ -111,29 +112,27 @@ export default function AdminAnnouncements() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/admin')}
-            className="gap-2"
-          >
+      <Header role="admin" />
+      
+      <div className="border-b border-border bg-card/50">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/admin')} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
+            Back
           </Button>
           <h1 className="text-xl font-bold">Manage Announcements</h1>
-          <Button onClick={() => setShowForm(!showForm)} className="gap-2">
+          <Button onClick={() => setShowForm(!showForm)} size="sm" className="gap-2 hover-lift">
             <Plus className="h-4 w-4" />
-            New Announcement
+            New
           </Button>
         </div>
-      </header>
+      </div>
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <main className="container mx-auto px-4 py-12 max-w-4xl">
         {showForm && (
-          <Card className="mb-6">
+          <Card className="mb-6 gradient-card border-border/50">
             <CardHeader>
-              <CardTitle>Create New Announcement</CardTitle>
+              <CardTitle className="text-2xl">Create New Announcement</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
+import brototypeLogo from '@/assets/brototype-logo.png';
 
 const signupSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be less than 100 characters'),
@@ -149,10 +150,17 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold">BroDebug Support</CardTitle>
-          <CardDescription>
+      <Card className="w-full max-w-md border-border shadow-xl">
+        <CardHeader className="text-center space-y-4">
+          <img 
+            src={brototypeLogo} 
+            alt="Brototype" 
+            className="mx-auto h-12 w-auto"
+          />
+          <CardTitle className="text-3xl font-bold">
+            BroDebug <span className="text-primary">Support</span>
+          </CardTitle>
+          <CardDescription className="text-base">
             {isLogin ? 'Login to your account' : 'Create a new student account'}
           </CardDescription>
         </CardHeader>
@@ -193,15 +201,15 @@ export default function Auth() {
               />
             </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full hover-lift" disabled={loading}>
             {loading ? 'Please wait...' : isLogin ? 'Login' : 'Sign Up'}
           </Button>
 
-            <div className="text-center">
+            <div className="text-center pt-2">
               <button
                 type="button"
                 onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-muted-foreground hover:text-foreground transition-smooth"
+                className="text-sm text-muted-foreground hover:text-primary transition-smooth"
               >
                 {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Login'}
               </button>
