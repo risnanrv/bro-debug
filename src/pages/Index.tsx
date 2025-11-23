@@ -11,7 +11,7 @@ const Index = () => {
         <img 
           src={brototypeLogo} 
           alt="Brototype" 
-          className="mx-auto mb-8 h-16 md:h-20 w-auto"
+          className="mx-auto mb-8 h-20 md:h-24 w-auto"
         />
         
         <h1 className="mb-6 text-5xl md:text-7xl font-bold tracking-tight">

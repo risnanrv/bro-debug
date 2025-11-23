@@ -26,7 +26,7 @@ const Header = ({ role }: HeaderProps) => {
           <img 
             src={brototypeLogo} 
             alt="Brototype" 
-            className="h-8 w-auto"
+            className="h-12 w-auto"
           />
         </button>
       </div>
