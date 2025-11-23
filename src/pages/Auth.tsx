@@ -155,7 +155,7 @@ export default function Auth() {
           <img 
             src={brototypeLogo} 
             alt="Brototype" 
-            className="mx-auto h-12 w-auto"
+            className="mx-auto h-16 w-auto"
           />
           <CardTitle className="text-3xl font-bold">
             BroDebug <span className="text-primary">Support</span>
