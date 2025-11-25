@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Plus, LogOut, User, Bell } from 'lucide-react';
 import Header from '@/components/Header';
+import ProgressStepper from '@/components/ProgressStepper';
+import AnnouncementPreview from '@/components/AnnouncementPreview';
 
 export default function Dashboard() {
   const { user, profile, signOut, loading } = useAuth();
@@ -36,30 +38,7 @@ export default function Dashboard() {
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      // Sort complaints by priority and status
-      const sortedComplaints = data.sort((a, b) => {
-        const statusOrder: Record<string, number> = {
-          'Escalated': 1,
-          'In Progress': 2,
-          'Pending': 3,
-          'Resolved': 4,
-          'Closed': 5,
-        };
-        const priorityOrder: Record<string, number> = {
-          'Critical': 1,
-          'Urgent': 2,
-          'Normal': 3,
-        };
-
-        // First sort by status
-        const statusDiff = statusOrder[a.status] - statusOrder[b.status];
-        if (statusDiff !== 0) return statusDiff;
-
-        // Then by priority
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
-      });
-
-      setComplaints(sortedComplaints);
+      setComplaints(data);
     }
     setLoadingComplaints(false);
   };
@@ -81,29 +60,29 @@ export default function Dashboard() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Pending':
-        return 'bg-muted text-muted-foreground';
-      case 'In Progress':
-        return 'bg-secondary text-secondary-foreground';
-      case 'Resolved':
-        return 'bg-primary text-primary-foreground';
-      case 'Escalated':
-        return 'bg-destructive text-destructive-foreground';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
-  };
-
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'Critical':
-        return 'bg-destructive text-destructive-foreground';
+        return 'hsl(var(--primary))';
       case 'Urgent':
-        return 'bg-secondary text-secondary-foreground';
+        return 'hsl(var(--accent))';
       default:
-        return 'bg-muted text-muted-foreground';
+        return 'hsl(var(--muted-foreground))';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Escalated':
+        return 'hsl(var(--status-escalated))';
+      case 'In Progress':
+        return 'hsl(var(--status-in-progress))';
+      case 'Resolved':
+        return 'hsl(var(--status-resolved))';
+      case 'Closed':
+        return 'hsl(var(--status-closed))';
+      default:
+        return 'hsl(var(--muted-foreground))';
     }
   };
 
@@ -114,6 +93,27 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  const activeComplaints = complaints
+    .filter((c) => ['Pending', 'In Progress', 'Escalated'].includes(c.status))
+    .sort((a, b) => {
+      const statusOrder: Record<string, number> = {
+        'Escalated': 1,
+        'In Progress': 2,
+        'Pending': 3,
+      };
+      const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+      if (statusDiff !== 0) return statusDiff;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
+  const historyComplaints = complaints
+    .filter((c) => ['Resolved', 'Closed'].includes(c.status))
+    .sort((a, b) => {
+      if (a.status === 'Resolved' && b.status === 'Closed') return -1;
+      if (a.status === 'Closed' && b.status === 'Resolved') return 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
   return (
     <div className="min-h-screen bg-background">
@@ -166,71 +166,127 @@ export default function Dashboard() {
           </Button>
         </div>
 
-        <div className="grid gap-6">
-          <Card className="gradient-card border-border/50 shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-2xl">Your Complaints</CardTitle>
-              <CardDescription className="text-base">Track and manage your submitted complaints</CardDescription>
-            </CardHeader>
-            <CardContent>
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-8">
+            {/* Active Complaints Section */}
+            <div>
+              <h3 className="text-2xl font-bold mb-4">Active Complaints</h3>
               {loadingComplaints ? (
                 <p className="text-muted-foreground">Loading complaints...</p>
-              ) : complaints.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground text-lg mb-4">No complaints yet.</p>
-                  <Button onClick={() => navigate('/complaint/new')} variant="outline">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create your first one
-                  </Button>
-                </div>
+              ) : activeComplaints.length === 0 ? (
+                <Card className="gradient-card border-border/50">
+                  <CardContent className="pt-6">
+                    <p className="text-muted-foreground text-center py-8">No active complaints</p>
+                  </CardContent>
+                </Card>
               ) : (
                 <div className="space-y-4">
-                  {complaints.map((complaint) => (
-                  <Card
-                    key={complaint.id}
-                    className={`cursor-pointer hover-lift border-border/50 transition-all ${
-                      complaint.status === 'Resolved' || complaint.status === 'Closed'
-                        ? 'opacity-50 hover:opacity-70'
-                        : 'hover:border-primary/50'
-                    }`}
-                    onClick={() => navigate(`/complaint/${complaint.id}`)}
-                  >
-                    <CardContent className="pt-6">
-                      <div className="flex items-start justify-between mb-3">
-                        <h3 className="font-bold text-xl">{complaint.title}</h3>
-                        <div className="flex gap-2 flex-shrink-0 ml-4">
-                          <Badge variant="outline" className="border-current" style={{
-                            color: complaint.priority === 'Critical' ? 'hsl(var(--primary))' :
-                                   complaint.priority === 'Urgent' ? 'hsl(var(--accent))' :
-                                   'hsl(var(--muted-foreground))'
-                          }}>
-                            {complaint.priority}
-                          </Badge>
-                          <Badge variant="outline" className="border-current" style={{
-                            color: complaint.status === 'Escalated' ? 'hsl(var(--status-escalated))' :
-                                   complaint.status === 'In Progress' ? 'hsl(var(--status-in-progress))' :
-                                   complaint.status === 'Resolved' ? 'hsl(var(--status-resolved))' :
-                                   'hsl(var(--muted-foreground))'
-                          }}>
-                            {complaint.status}
-                          </Badge>
+                  {activeComplaints.map((complaint) => (
+                    <Card
+                      key={complaint.id}
+                      className="cursor-pointer hover-lift border-border/50 transition-all hover:border-primary/50 gradient-card shadow-lg"
+                      onClick={() => navigate(`/complaint/${complaint.id}`)}
+                    >
+                      <CardContent className="pt-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <h3 className="font-bold text-xl flex-1">{complaint.title}</h3>
+                          <div className="flex gap-2 flex-shrink-0 ml-4">
+                            <Badge
+                              variant="outline"
+                              className="border-current"
+                              style={{ color: getPriorityColor(complaint.priority) }}
+                            >
+                              {complaint.priority}
+                            </Badge>
+                            <Badge
+                              variant="outline"
+                              className="border-current"
+                              style={{ color: getStatusColor(complaint.status) }}
+                            >
+                              {complaint.status}
+                            </Badge>
+                          </div>
                         </div>
-                      </div>
-                      <p className="text-muted-foreground mb-3 line-clamp-2">
-                        {complaint.description}
-                      </p>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <span className="font-medium">{complaint.custom_category_text || complaint.category}</span>
-                        <span>•</span>
-                        <span>{new Date(complaint.created_at).toLocaleDateString()}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                        <p className="text-muted-foreground mb-4 line-clamp-2">
+                          {complaint.description}
+                        </p>
+                        <div className="mb-4">
+                          <ProgressStepper status={complaint.status} />
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                          <span className="font-medium">{complaint.custom_category_text || complaint.category}</span>
+                          <span>•</span>
+                          <span>{new Date(complaint.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+
+            {/* History Section */}
+            {historyComplaints.length > 0 && (
+              <div>
+                <h3 className="text-2xl font-bold mb-4 text-muted-foreground">History — Resolved & Closed</h3>
+                <div className="space-y-4">
+                  {historyComplaints.map((complaint) => (
+                    <Card
+                      key={complaint.id}
+                      className="cursor-pointer hover-lift border-border/50 transition-all opacity-60 hover:opacity-80"
+                      onClick={() => navigate(`/complaint/${complaint.id}`)}
+                    >
+                      <CardContent className="pt-6">
+                        <div className="flex items-start justify-between mb-3">
+                          <h3 className="font-bold text-lg flex-1">{complaint.title}</h3>
+                          <div className="flex gap-2 flex-shrink-0 ml-4">
+                            <Badge
+                              variant="outline"
+                              className="border-current text-xs"
+                              style={{ color: getStatusColor(complaint.status) }}
+                            >
+                              {complaint.status}
+                            </Badge>
+                          </div>
+                        </div>
+                        <p className="text-muted-foreground text-sm mb-3 line-clamp-1">
+                          {complaint.description}
+                        </p>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span>{complaint.custom_category_text || complaint.category}</span>
+                          <span>•</span>
+                          <span>{new Date(complaint.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {complaints.length === 0 && !loadingComplaints && (
+              <Card className="gradient-card border-border/50 shadow-xl">
+                <CardHeader>
+                  <CardTitle className="text-2xl">Your Complaints</CardTitle>
+                  <CardDescription className="text-base">Track and manage your submitted complaints</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground text-lg mb-4">No complaints yet.</p>
+                    <Button onClick={() => navigate('/complaint/new')} variant="outline">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create your first one
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Announcement Preview - Right Side */}
+          <div className="lg:col-span-1">
+            <AnnouncementPreview userId={user?.id || ''} />
+          </div>
         </div>
       </main>
     </div>
