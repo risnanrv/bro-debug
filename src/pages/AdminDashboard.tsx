@@ -6,8 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LogOut, Filter, Bell } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { LogOut, Filter, Bell, Grid, Clock, PlayCircle, CheckCircle, AlertTriangle, Search, Eye } from 'lucide-react';
 import Header from '@/components/Header';
+import ProgressStepper from '@/components/ProgressStepper';
+import { formatDistanceToNow } from 'date-fns';
 
 export default function AdminDashboard() {
   const { user, profile, signOut, loading } = useAuth();
@@ -27,6 +30,10 @@ export default function AdminDashboard() {
     priority: 'all' as string,
     category: 'all' as string,
   });
+  
+  const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [quickFilter, setQuickFilter] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -130,6 +137,45 @@ export default function AdminDashboard() {
     }
   };
 
+  const getFilteredComplaints = () => {
+    let filtered = complaints;
+
+    // Apply active/history tab filter
+    if (activeTab === 'active') {
+      filtered = filtered.filter(c => ['Pending', 'In Progress', 'Escalated'].includes(c.status));
+    } else {
+      filtered = filtered.filter(c => ['Resolved', 'Closed'].includes(c.status));
+    }
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(c => 
+        c.title.toLowerCase().includes(query) ||
+        c.student_name_cached.toLowerCase().includes(query) ||
+        c.category.toLowerCase().includes(query) ||
+        (c.custom_category_text && c.custom_category_text.toLowerCase().includes(query))
+      );
+    }
+
+    // Apply quick filters
+    if (quickFilter === 'today') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      filtered = filtered.filter(c => new Date(c.created_at) >= today);
+    } else if (quickFilter === 'week') {
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      filtered = filtered.filter(c => new Date(c.created_at) >= weekAgo);
+    } else if (quickFilter === 'escalated') {
+      filtered = filtered.filter(c => c.status === 'Escalated');
+    }
+
+    return filtered;
+  };
+
+  const filteredComplaints = getFilteredComplaints();
+
   if (loading || !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -170,55 +216,70 @@ export default function AdminDashboard() {
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-          <Card className="gradient-card border-border/50 hover-lift">
+          <Card className="gradient-card border-border/50 hover-lift hover:shadow-lg transition-all">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                Total
-              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Grid className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                  Total
+                </CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <p className="text-4xl font-bold">{stats.total}</p>
             </CardContent>
           </Card>
 
-          <Card className="gradient-card border-border/50 hover-lift">
+          <Card className="gradient-card border-border/50 hover-lift hover:shadow-lg hover:shadow-accent/20 transition-all">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-accent uppercase tracking-wide">
-                Pending
-              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-accent" />
+                <CardTitle className="text-sm font-medium text-accent uppercase tracking-wide">
+                  Pending
+                </CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <p className="text-4xl font-bold text-accent">{stats.pending}</p>
             </CardContent>
           </Card>
 
-          <Card className="gradient-card border-border/50 hover-lift">
+          <Card className="gradient-card border-border/50 hover-lift hover:shadow-lg hover:shadow-status-in-progress/20 transition-all">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-status-in-progress uppercase tracking-wide">
-                In Progress
-              </CardTitle>
+              <div className="flex items-center gap-2">
+                <PlayCircle className="h-4 w-4 text-status-in-progress" />
+                <CardTitle className="text-sm font-medium text-status-in-progress uppercase tracking-wide">
+                  In Progress
+                </CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <p className="text-4xl font-bold text-status-in-progress">{stats.inProgress}</p>
             </CardContent>
           </Card>
 
-          <Card className="gradient-card border-border/50 hover-lift">
+          <Card className="gradient-card border-border/50 hover-lift hover:shadow-lg hover:shadow-status-resolved/20 transition-all">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-status-resolved uppercase tracking-wide">
-                Resolved
-              </CardTitle>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-status-resolved" />
+                <CardTitle className="text-sm font-medium text-status-resolved uppercase tracking-wide">
+                  Resolved
+                </CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <p className="text-4xl font-bold text-status-resolved">{stats.resolved}</p>
             </CardContent>
           </Card>
 
-          <Card className="gradient-card border-border/50 hover-lift">
+          <Card className="gradient-card border-border/50 hover-lift hover:shadow-lg hover:shadow-primary/20 transition-all">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-primary uppercase tracking-wide">
-                Escalated
-              </CardTitle>
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-primary" />
+                <CardTitle className="text-sm font-medium text-primary uppercase tracking-wide">
+                  Escalated
+                </CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <p className="text-4xl font-bold text-primary">{stats.escalated}</p>
@@ -230,135 +291,233 @@ export default function AdminDashboard() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
-              <CardTitle className="text-xl">Filters</CardTitle>
+              <CardTitle className="text-xl">Search & Filters</CardTitle>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by title, student name, or category..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Select
-                  value={filters.status}
-                  onValueChange={(value) => setFilters({ ...filters, status: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="Resolved">Resolved</SelectItem>
-                    <SelectItem value="Closed">Closed</SelectItem>
-                    <SelectItem value="Escalated">Escalated</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select
+                value={filters.status}
+                onValueChange={(value) => setFilters({ ...filters, status: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="In Progress">In Progress</SelectItem>
+                  <SelectItem value="Resolved">Resolved</SelectItem>
+                  <SelectItem value="Closed">Closed</SelectItem>
+                  <SelectItem value="Escalated">Escalated</SelectItem>
+                </SelectContent>
+              </Select>
 
-              <div>
-                <Select
-                  value={filters.priority}
-                  onValueChange={(value) => setFilters({ ...filters, priority: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Priorities</SelectItem>
-                    <SelectItem value="Critical">Critical</SelectItem>
-                    <SelectItem value="Urgent">Urgent</SelectItem>
-                    <SelectItem value="Normal">Normal</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select
+                value={filters.priority}
+                onValueChange={(value) => setFilters({ ...filters, priority: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Priorities</SelectItem>
+                  <SelectItem value="Critical">Critical</SelectItem>
+                  <SelectItem value="Urgent">Urgent</SelectItem>
+                  <SelectItem value="Normal">Normal</SelectItem>
+                </SelectContent>
+              </Select>
 
-              <div>
-                <Select
-                  value={filters.category}
-                  onValueChange={(value) => setFilters({ ...filters, category: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    <SelectItem value="Hostel / Accommodation">Hostel / Accommodation</SelectItem>
-                    <SelectItem value="Mentor Behavior / Staff Attitude">Mentor Behavior / Staff Attitude</SelectItem>
-                    <SelectItem value="Curriculum / Teaching">Curriculum / Teaching</SelectItem>
-                    <SelectItem value="Batch Management">Batch Management</SelectItem>
-                    <SelectItem value="Laptop / Lab / Internet / Wi-Fi Issue">Laptop / Lab / Internet / Wi-Fi Issue</SelectItem>
-                    <SelectItem value="Payment / Finance">Payment / Finance</SelectItem>
-                    <SelectItem value="Food / Canteen">Food / Canteen</SelectItem>
-                    <SelectItem value="Mental Health / Harassment / Bullying">Mental Health / Harassment / Bullying</SelectItem>
-                    <SelectItem value="Miscommunication / Misleading Information">Miscommunication / Misleading Information</SelectItem>
-                    <SelectItem value="Personal Safety">Personal Safety</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select
+                value={filters.category}
+                onValueChange={(value) => setFilters({ ...filters, category: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="Hostel / Accommodation">Hostel / Accommodation</SelectItem>
+                  <SelectItem value="Mentor Behavior / Staff Attitude">Mentor Behavior / Staff Attitude</SelectItem>
+                  <SelectItem value="Curriculum / Teaching">Curriculum / Teaching</SelectItem>
+                  <SelectItem value="Batch Management">Batch Management</SelectItem>
+                  <SelectItem value="Laptop / Lab / Internet / Wi-Fi Issue">Laptop / Lab / Internet / Wi-Fi Issue</SelectItem>
+                  <SelectItem value="Payment / Finance">Payment / Finance</SelectItem>
+                  <SelectItem value="Food / Canteen">Food / Canteen</SelectItem>
+                  <SelectItem value="Mental Health / Harassment / Bullying">Mental Health / Harassment / Bullying</SelectItem>
+                  <SelectItem value="Miscommunication / Misleading Information">Miscommunication / Misleading Information</SelectItem>
+                  <SelectItem value="Personal Safety">Personal Safety</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={quickFilter === 'today' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setQuickFilter(quickFilter === 'today' ? null : 'today')}
+              >
+                Today
+              </Button>
+              <Button
+                variant={quickFilter === 'week' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setQuickFilter(quickFilter === 'week' ? null : 'week')}
+              >
+                Last 7 days
+              </Button>
+              <Button
+                variant={quickFilter === 'escalated' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setQuickFilter(quickFilter === 'escalated' ? null : 'escalated')}
+              >
+                Escalated Only
+              </Button>
             </div>
           </CardContent>
         </Card>
 
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex gap-2">
+            <Button
+              variant={activeTab === 'active' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('active')}
+              className="gap-2"
+            >
+              <PlayCircle className="h-4 w-4" />
+              Active
+              <Badge variant="secondary" className="ml-1">
+                {stats.pending + stats.inProgress + stats.escalated}
+              </Badge>
+            </Button>
+            <Button
+              variant={activeTab === 'history' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('history')}
+              className="gap-2"
+            >
+              <CheckCircle className="h-4 w-4" />
+              History
+              <Badge variant="secondary" className="ml-1">
+                {stats.resolved + (complaints.filter(c => c.status === 'Closed').length)}
+              </Badge>
+            </Button>
+          </div>
+
+          <Card className="gradient-card border-border/50 px-4 py-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/admin/announcements')}
+              className="gap-2"
+            >
+              <Bell className="h-4 w-4" />
+              <span className="hidden md:inline">Announcements</span>
+            </Button>
+          </Card>
+        </div>
+
         <Card className="gradient-card border-border/50 shadow-xl">
           <CardHeader>
-            <CardTitle className="text-2xl">All Complaints</CardTitle>
+            <CardTitle className="text-2xl">
+              {activeTab === 'active' ? 'Active Complaints' : 'History — Resolved & Closed'}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {loadingComplaints ? (
               <p className="text-muted-foreground">Loading complaints...</p>
-            ) : complaints.length === 0 ? (
+            ) : filteredComplaints.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground text-lg">No complaints found with these filters</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {complaints.map((complaint) => (
-                  <Card
-                    key={complaint.id}
-                    className={`cursor-pointer hover-lift border-border/50 transition-all ${
-                      complaint.status === 'Resolved' || complaint.status === 'Closed'
-                        ? 'opacity-50 hover:opacity-70'
-                        : 'hover:border-primary/50'
-                    }`}
-                    onClick={() => navigate(`/admin/complaint/${complaint.id}`)}
-                  >
-                    <CardContent className="pt-6">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <h3 className="font-bold text-xl mb-1">{complaint.title}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            By: <span className="font-medium">{complaint.student_name_cached}</span>
-                          </p>
+                {filteredComplaints.map((complaint) => {
+                  const isHistory = complaint.status === 'Resolved' || complaint.status === 'Closed';
+                  const complaintAge = formatDistanceToNow(new Date(complaint.created_at), { addSuffix: true });
+                  
+                  return (
+                    <Card
+                      key={complaint.id}
+                      className={`group cursor-pointer hover-lift border-border/50 transition-all relative ${
+                        isHistory
+                          ? 'opacity-60 hover:opacity-80'
+                          : 'hover:border-primary/50 hover:shadow-lg'
+                      }`}
+                      onClick={() => navigate(`/admin/complaint/${complaint.id}`)}
+                    >
+                      <CardContent className="pt-6">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="font-bold text-xl mb-1">{complaint.title}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              By: <span className="font-medium">{complaint.student_name_cached}</span>
+                            </p>
+                          </div>
+                          <div className="flex gap-2 flex-shrink-0 ml-4">
+                            <Badge variant="outline" className="border-current" style={{
+                              color: complaint.priority === 'Critical' ? 'hsl(var(--primary))' :
+                                     complaint.priority === 'Urgent' ? 'hsl(var(--accent))' :
+                                     'hsl(var(--muted-foreground))'
+                            }}>
+                              {complaint.priority}
+                            </Badge>
+                            <Badge variant="outline" className="border-current" style={{
+                              color: complaint.status === 'Escalated' ? 'hsl(var(--status-escalated))' :
+                                     complaint.status === 'In Progress' ? 'hsl(var(--status-in-progress))' :
+                                     complaint.status === 'Resolved' ? 'hsl(var(--status-resolved))' :
+                                     'hsl(var(--muted-foreground))'
+                            }}>
+                              {complaint.status}
+                            </Badge>
+                          </div>
                         </div>
-                        <div className="flex gap-2 flex-shrink-0 ml-4">
-                          <Badge variant="outline" className="border-current" style={{
-                            color: complaint.priority === 'Critical' ? 'hsl(var(--primary))' :
-                                   complaint.priority === 'Urgent' ? 'hsl(var(--accent))' :
-                                   'hsl(var(--muted-foreground))'
-                          }}>
-                            {complaint.priority}
-                          </Badge>
-                          <Badge variant="outline" className="border-current" style={{
-                            color: complaint.status === 'Escalated' ? 'hsl(var(--status-escalated))' :
-                                   complaint.status === 'In Progress' ? 'hsl(var(--status-in-progress))' :
-                                   complaint.status === 'Resolved' ? 'hsl(var(--status-resolved))' :
-                                   'hsl(var(--muted-foreground))'
-                          }}>
-                            {complaint.status}
-                          </Badge>
+                        
+                        <p className="text-muted-foreground mb-4 line-clamp-2">
+                          {complaint.description}
+                        </p>
+
+                        <div className="mb-4">
+                          <ProgressStepper status={complaint.status} />
                         </div>
-                      </div>
-                      <p className="text-muted-foreground mb-3 line-clamp-2">
-                        {complaint.description}
-                      </p>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <span className="font-medium">{complaint.custom_category_text || complaint.category}</span>
-                        <span>•</span>
-                        <span>{new Date(complaint.created_at).toLocaleDateString()}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <span className="font-medium">{complaint.custom_category_text || complaint.category}</span>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {complaintAge}
+                            </span>
+                          </div>
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity gap-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/admin/complaint/${complaint.id}`);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                            View & Update
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </CardContent>
