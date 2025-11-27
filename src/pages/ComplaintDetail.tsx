@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, RefreshCw, MessageCircle, XCircle, RotateCcw } from 'lucide-react';
+import { ArrowLeft, RefreshCw, MessageCircle, XCircle, RotateCcw, Bell, LogOut, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ComplaintTimeline from '@/components/ComplaintTimeline';
-import Header from '@/components/Header';
+import brototypeLogo from '@/assets/brototype-logo-new.png';
 
 export default function ComplaintDetail() {
   const { id } = useParams();
@@ -19,6 +19,7 @@ export default function ComplaintDetail() {
   const [complaint, setComplaint] = useState<any>(null);
   const [notes, setNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (id) {
@@ -26,6 +27,29 @@ export default function ComplaintDetail() {
       fetchNotes();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUnreadCount();
+    }
+  }, [user]);
+
+  const fetchUnreadCount = async () => {
+    const { data: announcements } = await supabase
+      .from('announcements')
+      .select('id');
+
+    const { data: reads } = await supabase
+      .from('announcement_reads')
+      .select('announcement_id')
+      .eq('student_id', user?.id);
+
+    if (announcements && reads) {
+      const readIds = new Set(reads.map((r) => r.announcement_id));
+      const unread = announcements.filter((a) => !readIds.has(a.id)).length;
+      setUnreadCount(unread);
+    }
+  };
 
   const fetchComplaint = async () => {
     const { data, error } = await supabase
@@ -212,20 +236,68 @@ export default function ComplaintDetail() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header role="student" />
-      
-      <div className="border-b border-border bg-card/50">
-        <div className="container mx-auto px-4 py-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/dashboard')}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Button>
+      {/* Unified Navbar */}
+      <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/dashboard')}
+              className="hover:opacity-80 transition-opacity"
+            >
+              <img 
+                src={brototypeLogo} 
+                alt="Brototype" 
+                className="h-12 w-auto"
+              />
+            </button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/dashboard')}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden md:inline">Back to Dashboard</span>
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/updates')}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <Bell className="h-4 w-4" />
+              <span className="hidden md:inline">Updates</span>
+              {unreadCount > 0 && (
+                <Badge variant="destructive" className="rounded-full px-2 py-0.5 text-xs">
+                  {unreadCount}
+                </Badge>
+              )}
+            </Button>
+            
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/profile')}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <User className="h-4 w-4" />
+              <span className="hidden md:inline">Profile</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              onClick={() => {
+                supabase.auth.signOut();
+                navigate('/auth');
+              }}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden md:inline">Logout</span>
+            </Button>
+          </div>
         </div>
-      </div>
+      </nav>
 
       <main className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Title Block */}

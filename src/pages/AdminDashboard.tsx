@@ -8,9 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { LogOut, Filter, Bell, Grid, Clock, PlayCircle, CheckCircle, AlertTriangle, Search, Eye } from 'lucide-react';
-import Header from '@/components/Header';
 import ProgressStepper from '@/components/ProgressStepper';
 import { formatDistanceToNow } from 'date-fns';
+import brototypeLogo from '@/assets/brototype-logo-new.png';
 
 export default function AdminDashboard() {
   const { user, profile, signOut, loading } = useAuth();
@@ -186,24 +186,43 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header role="admin" />
-      
-      <div className="border-b border-border bg-card/50">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-end gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/admin/announcements')}
-          >
-            <Bell className="h-4 w-4 mr-2" />
-            Announcements
-          </Button>
-          <Button variant="ghost" size="sm" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
+      {/* Unified Navbar */}
+      <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center">
+            <button 
+              onClick={() => navigate('/admin')}
+              className="hover:opacity-80 transition-opacity"
+            >
+              <img 
+                src={brototypeLogo} 
+                alt="Brototype" 
+                className="h-12 w-auto"
+              />
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/admin/announcements')}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <Bell className="h-4 w-4" />
+              <span className="hidden md:inline">Announcements</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              onClick={signOut}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden md:inline">Logout</span>
+            </Button>
+          </div>
         </div>
-      </div>
+      </nav>
 
       <main className="container mx-auto px-4 py-12 max-w-7xl">
         <div className="mb-12">
