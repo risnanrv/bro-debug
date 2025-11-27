@@ -7,9 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Bell, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import Header from '@/components/Header';
+import brototypeLogo from '@/assets/brototype-logo-new.png';
 
 export default function AdminAnnouncements() {
   const { profile, loading } = useAuth();
@@ -112,18 +112,61 @@ export default function AdminAnnouncements() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header role="admin" />
+      {/* Unified Navbar */}
+      <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/admin')}
+              className="hover:opacity-80 transition-opacity"
+            >
+              <img 
+                src={brototypeLogo} 
+                alt="Brototype" 
+                className="h-12 w-auto"
+              />
+            </button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/admin')}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden md:inline">Back to Dashboard</span>
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/admin/announcements')}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <Bell className="h-4 w-4" />
+              <span className="hidden md:inline">Announcements</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              onClick={() => {
+                supabase.auth.signOut();
+                navigate('/auth');
+              }}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden md:inline">Logout</span>
+            </Button>
+          </div>
+        </div>
+      </nav>
       
       <div className="border-b border-border bg-card/50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/admin')} className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
           <h1 className="text-xl font-bold">Manage Announcements</h1>
           <Button onClick={() => setShowForm(!showForm)} size="sm" className="gap-2 hover-lift">
             <Plus className="h-4 w-4" />
-            New
+            <span className="hidden md:inline">New Announcement</span>
           </Button>
         </div>
       </div>

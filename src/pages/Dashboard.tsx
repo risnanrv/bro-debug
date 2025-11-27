@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, LogOut, User, Bell } from 'lucide-react';
-import Header from '@/components/Header';
 import ProgressStepper from '@/components/ProgressStepper';
 import AnnouncementPreview from '@/components/AnnouncementPreview';
+import brototypeLogo from '@/assets/brototype-logo-new.png';
 
 export default function Dashboard() {
   const { user, profile, signOut, loading } = useAuth();
@@ -117,37 +117,57 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header role="student" />
-      
-      <div className="border-b border-border bg-card/50">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-end gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/updates')}
-            className="relative"
-          >
-            <Bell className="h-4 w-4 mr-2" />
-            Updates
-            {unreadCount > 0 && (
-              <Badge
-                variant="default"
-                className="ml-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-primary"
-              >
-                {unreadCount}
-              </Badge>
-            )}
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/profile')}>
-            <User className="h-4 w-4 mr-2" />
-            Profile
-          </Button>
-          <Button variant="ghost" size="sm" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
+      {/* Unified Navbar */}
+      <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center">
+            <button 
+              onClick={() => navigate('/dashboard')}
+              className="hover:opacity-80 transition-opacity"
+            >
+              <img 
+                src={brototypeLogo} 
+                alt="Brototype" 
+                className="h-12 w-auto"
+              />
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/updates')}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <Bell className="h-4 w-4" />
+              <span className="hidden md:inline">Updates</span>
+              {unreadCount > 0 && (
+                <Badge variant="destructive" className="rounded-full px-2 py-0.5 text-xs">
+                  {unreadCount}
+                </Badge>
+              )}
+            </Button>
+            
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/profile')}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <User className="h-4 w-4" />
+              <span className="hidden md:inline">Profile</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              onClick={signOut}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden md:inline">Logout</span>
+            </Button>
+          </div>
         </div>
-      </div>
+      </nav>
 
       <main className="container mx-auto px-4 py-12 max-w-7xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">

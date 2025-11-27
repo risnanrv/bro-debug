@@ -21,10 +21,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-import { ArrowLeft, Calendar, User, MapPin, GraduationCap, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Calendar, User, MapPin, GraduationCap, MessageSquare, Bell, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ComplaintTimeline, { TimelineEvent } from '@/components/ComplaintTimeline';
 import { formatDistanceToNow } from 'date-fns';
+import brototypeLogo from '@/assets/brototype-logo-new.png';
 
 export default function AdminComplaintDetail() {
   const { id } = useParams();
@@ -304,18 +305,54 @@ export default function AdminComplaintDetail() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/admin')}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Admin Dashboard
-          </Button>
+      {/* Unified Navbar */}
+      <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/admin')}
+              className="hover:opacity-80 transition-opacity"
+            >
+              <img 
+                src={brototypeLogo} 
+                alt="Brototype" 
+                className="h-12 w-auto"
+              />
+            </button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/admin')}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden md:inline">Back to Dashboard</span>
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/admin/announcements')}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <Bell className="h-4 w-4" />
+              <span className="hidden md:inline">Announcements</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              onClick={() => {
+                supabase.auth.signOut();
+                navigate('/auth');
+              }}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden md:inline">Logout</span>
+            </Button>
+          </div>
         </div>
-      </header>
+      </nav>
 
       <main className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

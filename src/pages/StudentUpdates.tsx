@@ -5,9 +5,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Check } from 'lucide-react';
+import { ArrowLeft, Check, Bell, LogOut, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import Header from '@/components/Header';
+import brototypeLogo from '@/assets/brototype-logo-new.png';
 
 export default function StudentUpdates() {
   const { user, profile, loading } = useAuth();
@@ -91,17 +91,68 @@ export default function StudentUpdates() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header role="student" />
-      
-      <div className="border-b border-border bg-card/50">
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-          <h1 className="text-xl font-bold">Updates {unreadCount > 0 && <Badge className="ml-2 bg-primary">{unreadCount}</Badge>}</h1>
+      {/* Unified Navbar */}
+      <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/dashboard')}
+              className="hover:opacity-80 transition-opacity"
+            >
+              <img 
+                src={brototypeLogo} 
+                alt="Brototype" 
+                className="h-12 w-auto"
+              />
+            </button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/dashboard')}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden md:inline">Back to Dashboard</span>
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/updates')}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <Bell className="h-4 w-4" />
+              <span className="hidden md:inline">Updates</span>
+              {unreadCount > 0 && (
+                <Badge variant="destructive" className="rounded-full px-2 py-0.5 text-xs">
+                  {unreadCount}
+                </Badge>
+              )}
+            </Button>
+            
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/profile')}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <User className="h-4 w-4" />
+              <span className="hidden md:inline">Profile</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              onClick={() => {
+                supabase.auth.signOut();
+                navigate('/auth');
+              }}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden md:inline">Logout</span>
+            </Button>
+          </div>
         </div>
-      </div>
+      </nav>
 
       <main className="container mx-auto px-4 py-12 max-w-4xl">
         <Card className="gradient-card border-border/50 shadow-xl">

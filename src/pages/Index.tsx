@@ -2,24 +2,40 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Shield, MessageSquare, Clock, CheckCircle, Lock, Users, ArrowRight, FileCheck } from 'lucide-react';
-import brototypeLogo from '@/assets/brototype-logo.png';
+import brototypeLogo from '@/assets/brototype-logo-new.png';
 
 const Index = () => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Navbar */}
+      <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center">
+            <img 
+              src={brototypeLogo} 
+              alt="Brototype" 
+              className="h-12 w-auto"
+            />
+          </div>
+          <div className="flex items-center gap-4">
+            <Button 
+              onClick={() => navigate('/auth')}
+              variant="default"
+              className="bg-primary hover:bg-primary/90"
+            >
+              Login
+            </Button>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
         <div className="container relative mx-auto px-4 py-20 md:py-32">
-          <div className="text-center max-w-5xl mx-auto">
-            <img 
-              src={brototypeLogo} 
-              alt="Brototype" 
-              className="mx-auto mb-8 h-[200px] w-[150px] animate-fade-in"
-            />
-            
+          <div className="text-center max-w-5xl mx-auto">            
             <h1 className="mb-6 text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight animate-fade-in">
               BroDebug <span className="text-primary">Support</span>
             </h1>

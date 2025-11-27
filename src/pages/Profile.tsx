@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,16 +8,18 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Upload } from 'lucide-react';
-import Header from '@/components/Header';
+import { ArrowLeft, Upload, Bell, LogOut, User } from 'lucide-react';
+import brototypeLogo from '@/assets/brototype-logo-new.png';
 
 export default function Profile() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -28,6 +30,29 @@ export default function Profile() {
     mode: profile?.mode || '',
     location: profile?.location || '',
   });
+
+  useEffect(() => {
+    if (user) {
+      fetchUnreadCount();
+    }
+  }, [user]);
+
+  const fetchUnreadCount = async () => {
+    const { data: announcements } = await supabase
+      .from('announcements')
+      .select('id');
+
+    const { data: reads } = await supabase
+      .from('announcement_reads')
+      .select('announcement_id')
+      .eq('student_id', user?.id);
+
+    if (announcements && reads) {
+      const readIds = new Set(reads.map((r) => r.announcement_id));
+      const unread = announcements.filter((a) => !readIds.has(a.id)).length;
+      setUnreadCount(unread);
+    }
+  };
 
   if (!profile) {
     return (
@@ -127,21 +152,68 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header role="student" />
-      
-      <div className="border-b border-border bg-card/50">
-        <div className="container mx-auto px-4 py-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/dashboard')}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Button>
+      {/* Unified Navbar */}
+      <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/dashboard')}
+              className="hover:opacity-80 transition-opacity"
+            >
+              <img 
+                src={brototypeLogo} 
+                alt="Brototype" 
+                className="h-12 w-auto"
+              />
+            </button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/dashboard')}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden md:inline">Back to Dashboard</span>
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/updates')}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <Bell className="h-4 w-4" />
+              <span className="hidden md:inline">Updates</span>
+              {unreadCount > 0 && (
+                <Badge variant="destructive" className="rounded-full px-2 py-0.5 text-xs">
+                  {unreadCount}
+                </Badge>
+              )}
+            </Button>
+            
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/profile')}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <User className="h-4 w-4" />
+              <span className="hidden md:inline">Profile</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              onClick={() => {
+                supabase.auth.signOut();
+                navigate('/auth');
+              }}
+              className="text-sm font-medium flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden md:inline">Logout</span>
+            </Button>
+          </div>
         </div>
-      </div>
+      </nav>
 
       <main className="container mx-auto px-4 py-12 max-w-3xl">
         <Card className="gradient-card border-border/50 shadow-xl">
