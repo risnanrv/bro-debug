@@ -6,6 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, RefreshCw, MessageCircle, XCircle, RotateCcw, Bell, LogOut, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ComplaintTimeline from '@/components/ComplaintTimeline';
@@ -20,6 +29,10 @@ export default function ComplaintDetail() {
   const [notes, setNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showClarificationDialog, setShowClarificationDialog] = useState(false);
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
+  const [clarificationMessage, setClarificationMessage] = useState('');
+  const [closeNote, setCloseNote] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -69,7 +82,7 @@ export default function ComplaintDetail() {
       .from('resolution_notes')
       .select('*')
       .eq('complaint_id', id)
-      .eq('type', 'public')
+      .in('type', ['public', 'clarification_request', 'close_request'])
       .order('created_at', { ascending: true });
 
     if (!error && data) {
@@ -89,7 +102,7 @@ export default function ComplaintDetail() {
   const handleReopen = async () => {
     const { error } = await supabase
       .from('complaints')
-      .update({ status: 'In Progress', satisfaction: null })
+      .update({ status: 'In Progress', satisfaction: null, close_requested: false })
       .eq('id', id);
 
     if (error) {
@@ -107,6 +120,84 @@ export default function ComplaintDetail() {
     });
 
     fetchComplaint();
+  };
+
+  const handleAskClarification = async () => {
+    if (!clarificationMessage.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter your clarification request',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const { error } = await supabase.from('resolution_notes').insert({
+      complaint_id: id,
+      admin_id: user?.id,
+      type: 'clarification_request',
+      message: clarificationMessage,
+    });
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    toast({
+      title: 'Clarification sent',
+      description: 'Your clarification request has been sent to the admin',
+    });
+
+    setClarificationMessage('');
+    setShowClarificationDialog(false);
+    fetchNotes();
+  };
+
+  const handleRequestClose = async () => {
+    const { error: noteError } = await supabase.from('resolution_notes').insert({
+      complaint_id: id,
+      admin_id: user?.id,
+      type: 'close_request',
+      message: closeNote.trim() || 'Student has requested to close this complaint',
+    });
+
+    if (noteError) {
+      toast({
+        title: 'Error',
+        description: noteError.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const { error: complaintError } = await supabase
+      .from('complaints')
+      .update({ close_requested: true })
+      .eq('id', id);
+
+    if (complaintError) {
+      toast({
+        title: 'Error',
+        description: complaintError.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    toast({
+      title: 'Close request sent',
+      description: 'Your close request has been sent to the admin',
+    });
+
+    setCloseNote('');
+    setShowCloseDialog(false);
+    fetchComplaint();
+    fetchNotes();
   };
 
   const getPriorityColor = (priority: string) => {
@@ -180,13 +271,31 @@ export default function ComplaintDetail() {
   }
 
   notes.forEach((note) => {
-    timelineEvents.push({
-      icon: 'message',
-      title: 'Admin replied',
-      description: note.message,
-      timestamp: new Date(note.created_at).toLocaleString(),
-      isActive: true,
-    });
+    if (note.type === 'clarification_request') {
+      timelineEvents.push({
+        icon: 'message',
+        title: 'Clarification Requested',
+        description: note.message,
+        timestamp: new Date(note.created_at).toLocaleString(),
+        isActive: true,
+      });
+    } else if (note.type === 'close_request') {
+      timelineEvents.push({
+        icon: 'message',
+        title: 'Close Request Sent',
+        description: note.message,
+        timestamp: new Date(note.created_at).toLocaleString(),
+        isActive: true,
+      });
+    } else {
+      timelineEvents.push({
+        icon: 'message',
+        title: 'Admin replied',
+        description: note.message,
+        timestamp: new Date(note.created_at).toLocaleString(),
+        isActive: true,
+      });
+    }
   });
 
   if (complaint.status === 'Resolved') {
@@ -239,26 +348,16 @@ export default function ComplaintDetail() {
       {/* Unified Navbar */}
       <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => navigate('/dashboard')}
-              className="hover:opacity-80 transition-opacity"
-            >
-              <img 
-                src={brototypeLogo} 
-                alt="Brototype" 
-                className="logo-size pl-3 pt-1"
-              />
-            </button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/dashboard')}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden md:inline">Back to Dashboard</span>
-            </Button>
-          </div>
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="hover:opacity-80 transition-opacity"
+          >
+            <img 
+              src={brototypeLogo} 
+              alt="Brototype" 
+              className="logo-size pl-3 pt-1"
+            />
+          </button>
           
           <div className="flex items-center gap-4">
             <Button
@@ -300,6 +399,16 @@ export default function ComplaintDetail() {
       </nav>
 
       <main className="container mx-auto px-4 py-8 max-w-6xl">
+        {/* Back Button */}
+        <Button
+          variant="outline"
+          onClick={() => navigate('/dashboard')}
+          className="mb-6 gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Button>
+
         {/* Title Block */}
         <div className="mb-8">
           <div className="flex items-start justify-between mb-4">
@@ -420,15 +529,49 @@ export default function ComplaintDetail() {
           
           {(complaint.status === 'Pending' || complaint.status === 'In Progress') && (
             <>
-              <Button variant="outline" className="gap-2">
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                onClick={() => setShowClarificationDialog(true)}
+              >
                 <MessageCircle className="h-4 w-4" />
                 Ask for Clarification
               </Button>
-              <Button variant="outline" className="gap-2">
-                <XCircle className="h-4 w-4" />
-                Request to Close
-              </Button>
+              {!complaint.close_requested && (
+                <Button 
+                  variant="outline" 
+                  className="gap-2"
+                  onClick={() => setShowCloseDialog(true)}
+                >
+                  <XCircle className="h-4 w-4" />
+                  Request to Close
+                </Button>
+              )}
+              {complaint.close_requested && (
+                <Button variant="outline" className="gap-2" disabled>
+                  <XCircle className="h-4 w-4" />
+                  Close Request Sent
+                </Button>
+              )}
             </>
+          )}
+          
+          {complaint.status === 'Resolved' && !complaint.close_requested && (
+            <Button 
+              variant="outline" 
+              className="gap-2"
+              onClick={() => setShowCloseDialog(true)}
+            >
+              <XCircle className="h-4 w-4" />
+              Request to Close
+            </Button>
+          )}
+          
+          {complaint.status === 'Resolved' && complaint.close_requested && (
+            <Button variant="outline" className="gap-2" disabled>
+              <XCircle className="h-4 w-4" />
+              Close Request Sent
+            </Button>
           )}
           
           {(complaint.status === 'Resolved' || complaint.status === 'Closed') && (
@@ -439,6 +582,61 @@ export default function ComplaintDetail() {
           )}
         </div>
       </main>
+
+      {/* Clarification Dialog */}
+      <Dialog open={showClarificationDialog} onOpenChange={setShowClarificationDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ask for Clarification</DialogTitle>
+            <DialogDescription>
+              Describe what you want the admin to clarify about this complaint.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            placeholder="Type your question or clarification for the admin..."
+            value={clarificationMessage}
+            onChange={(e) => setClarificationMessage(e.target.value)}
+            className="min-h-[120px]"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowClarificationDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAskClarification}>
+              Send Request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Close Request Dialog */}
+      <Dialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Request to Close Complaint</DialogTitle>
+            <DialogDescription>
+              If your issue is resolved, you can request the admin to close this complaint.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Additional note (optional)</label>
+            <Textarea
+              placeholder="Share any final note about how this was resolved..."
+              value={closeNote}
+              onChange={(e) => setCloseNote(e.target.value)}
+              className="min-h-[100px]"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCloseDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRequestClose}>
+              Send Close Request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

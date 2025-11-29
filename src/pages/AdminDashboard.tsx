@@ -499,6 +499,11 @@ export default function AdminDashboard() {
                             }}>
                               {complaint.status}
                             </Badge>
+                            {complaint.close_requested && (
+                              <Badge variant="outline" className="border-accent text-accent">
+                                Close Request
+                              </Badge>
+                            )}
                           </div>
                         </div>
                         
