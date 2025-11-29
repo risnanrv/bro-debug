@@ -197,7 +197,7 @@ export default function AdminDashboard() {
               <img 
                 src={brototypeLogo} 
                 alt="Brototype" 
-                className="h-12 w-auto"
+                className="logo-size pl-3 pt-1"
               />
             </button>
           </div>

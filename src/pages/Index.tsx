@@ -16,7 +16,7 @@ const Index = () => {
             <img 
               src={brototypeLogo} 
               alt="Brototype" 
-              className="h-12 w-auto"
+              className="logo-size pl-3 pt-1"
             />
           </div>
           <div className="flex items-center gap-4">
