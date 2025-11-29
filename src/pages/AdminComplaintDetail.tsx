@@ -88,7 +88,6 @@ export default function AdminComplaintDetail() {
       .from('resolution_notes')
       .select('*')
       .eq('complaint_id', id)
-      .eq('type', 'public')
       .order('created_at', { ascending: true });
 
     if (!error && data) {
@@ -250,15 +249,33 @@ export default function AdminComplaintDetail() {
       });
     }
 
-    // Admin responses
+    // Admin responses and student interactions
     responses.forEach((response) => {
-      events.push({
-        icon: 'message',
-        title: 'Admin Response',
-        description: response.message,
-        timestamp: new Date(response.created_at).toLocaleString(),
-        isActive: true,
-      });
+      if (response.type === 'clarification_request') {
+        events.push({
+          icon: 'message',
+          title: 'Student Requested Clarification',
+          description: response.message,
+          timestamp: new Date(response.created_at).toLocaleString(),
+          isActive: true,
+        });
+      } else if (response.type === 'close_request') {
+        events.push({
+          icon: 'message',
+          title: 'Student Requested to Close',
+          description: response.message,
+          timestamp: new Date(response.created_at).toLocaleString(),
+          isActive: true,
+        });
+      } else if (response.type === 'public') {
+        events.push({
+          icon: 'message',
+          title: 'Admin Response',
+          description: response.message,
+          timestamp: new Date(response.created_at).toLocaleString(),
+          isActive: true,
+        });
+      }
     });
 
     // Resolved
@@ -308,26 +325,16 @@ export default function AdminComplaintDetail() {
       {/* Unified Navbar */}
       <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => navigate('/admin')}
-              className="hover:opacity-80 transition-opacity"
-            >
-              <img 
-                src={brototypeLogo} 
-                alt="Brototype" 
-                className="logo-size pl-3 pt-1"
-              />
-            </button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/admin')}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden md:inline">Back to Dashboard</span>
-            </Button>
-          </div>
+          <button 
+            onClick={() => navigate('/admin')}
+            className="hover:opacity-80 transition-opacity"
+          >
+            <img 
+              src={brototypeLogo} 
+              alt="Brototype" 
+              className="logo-size pl-3 pt-1"
+            />
+          </button>
           
           <div className="flex items-center gap-4">
             <Button
@@ -355,6 +362,16 @@ export default function AdminComplaintDetail() {
       </nav>
 
       <main className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Back Button */}
+        <Button
+          variant="outline"
+          onClick={() => navigate('/admin')}
+          className="mb-6 gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Button>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Case Information */}
           <div className="lg:col-span-2 space-y-6">
@@ -379,6 +396,11 @@ export default function AdminComplaintDetail() {
                     }}>
                       {complaint.status}
                     </Badge>
+                    {complaint.close_requested && (
+                      <Badge variant="outline" className="border-accent text-accent">
+                        Close Requested
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     Created on: {new Date(complaint.created_at).toLocaleString()} | 

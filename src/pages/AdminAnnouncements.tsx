@@ -115,26 +115,16 @@ export default function AdminAnnouncements() {
       {/* Unified Navbar */}
       <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => navigate('/admin')}
-              className="hover:opacity-80 transition-opacity"
-            >
-              <img 
-                src={brototypeLogo} 
-                alt="Brototype" 
-                className="logo-size pl-3 pt-1"
-              />
-            </button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/admin')}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden md:inline">Back to Dashboard</span>
-            </Button>
-          </div>
+          <button 
+            onClick={() => navigate('/admin')}
+            className="hover:opacity-80 transition-opacity"
+          >
+            <img 
+              src={brototypeLogo} 
+              alt="Brototype" 
+              className="logo-size pl-3 pt-1"
+            />
+          </button>
           
           <div className="flex items-center gap-4">
             <Button
@@ -160,18 +150,28 @@ export default function AdminAnnouncements() {
           </div>
         </div>
       </nav>
-      
-      <div className="border-b border-border bg-card/50">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <h1 className="text-xl font-bold">Manage Announcements</h1>
+
+      <main className="container mx-auto px-4 py-8 max-w-4xl">
+        {/* Back Button */}
+        <Button
+          variant="outline"
+          onClick={() => navigate('/admin')}
+          className="mb-6 gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Button>
+
+        <div className="border-b border-border bg-card/50 rounded-lg mb-6">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <h1 className="text-xl font-bold">Manage Announcements</h1>
           <Button onClick={() => setShowForm(!showForm)} size="sm" className="gap-2 hover-lift">
             <Plus className="h-4 w-4" />
             <span className="hidden md:inline">New Announcement</span>
           </Button>
+          </div>
         </div>
-      </div>
 
-      <main className="container mx-auto px-4 py-12 max-w-4xl">
         {showForm && (
           <Card className="mb-6 gradient-card border-border/50">
             <CardHeader>

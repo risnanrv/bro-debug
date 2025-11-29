@@ -71,6 +71,7 @@ export type Database = {
         Row: {
           attachments: string[] | null
           category: Database["public"]["Enums"]["category"]
+          close_requested: boolean | null
           closed_at: string | null
           created_at: string
           custom_category_text: string | null
@@ -88,6 +89,7 @@ export type Database = {
         Insert: {
           attachments?: string[] | null
           category: Database["public"]["Enums"]["category"]
+          close_requested?: boolean | null
           closed_at?: string | null
           created_at?: string
           custom_category_text?: string | null
@@ -105,6 +107,7 @@ export type Database = {
         Update: {
           attachments?: string[] | null
           category?: Database["public"]["Enums"]["category"]
+          close_requested?: boolean | null
           closed_at?: string | null
           created_at?: string
           custom_category_text?: string | null
@@ -299,7 +302,11 @@ export type Database = {
         | "Chennai"
         | "Other"
       mode: "Offline" | "Online"
-      note_type: "public" | "internal"
+      note_type:
+        | "public"
+        | "internal"
+        | "clarification_request"
+        | "close_request"
       priority: "Critical" | "Urgent" | "Normal"
       satisfaction: "satisfied" | "unsatisfied"
       user_role: "student" | "admin"
@@ -473,7 +480,12 @@ export const Constants = {
         "Other",
       ],
       mode: ["Offline", "Online"],
-      note_type: ["public", "internal"],
+      note_type: [
+        "public",
+        "internal",
+        "clarification_request",
+        "close_request",
+      ],
       priority: ["Critical", "Urgent", "Normal"],
       satisfaction: ["satisfied", "unsatisfied"],
       user_role: ["student", "admin"],
