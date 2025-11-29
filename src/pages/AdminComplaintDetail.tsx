@@ -20,8 +20,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-import { ArrowLeft, Calendar, User, MapPin, GraduationCap, MessageSquare, Bell, LogOut } from 'lucide-react';
+import { ArrowLeft, Calendar, User, MapPin, GraduationCap, MessageSquare, Bell, LogOut, Sparkles, FileText, Image as ImageIcon, Video, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ComplaintTimeline, { TimelineEvent } from '@/components/ComplaintTimeline';
 import { formatDistanceToNow } from 'date-fns';
@@ -41,6 +47,10 @@ export default function AdminComplaintDetail() {
   const [logAsTimeline, setLogAsTimeline] = useState(true);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [studentProfile, setStudentProfile] = useState<any>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<any>(null);
+  const [selectedTone, setSelectedTone] = useState('Formal');
+  const [selectedAttachment, setSelectedAttachment] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && profile?.role !== 'admin') {
@@ -93,6 +103,60 @@ export default function AdminComplaintDetail() {
     if (!error && data) {
       setResponses(data);
     }
+  };
+
+  const handleAiGenerate = async () => {
+    setAiLoading(true);
+    try {
+      const latestMessage = responses
+        .filter(r => r.type === 'clarification_request' || r.type === 'feedback_unsatisfied')
+        .pop()?.message || '';
+
+      const { data, error } = await supabase.functions.invoke('generate-response', {
+        body: {
+          complaint: {
+            title: complaint.title,
+            description: complaint.description,
+            category: complaint.category,
+            priority: complaint.priority,
+            status: complaint.status,
+            latestMessage
+          },
+          tone: selectedTone
+        }
+      });
+
+      if (error) throw error;
+
+      setAiSuggestion(data);
+      toast({
+        title: 'AI Response Generated',
+        description: 'Review and edit before sending',
+      });
+    } catch (error: any) {
+      console.error('AI generation error:', error);
+      toast({
+        title: 'AI Generation Failed',
+        description: error.message || 'Failed to generate response',
+        variant: 'destructive',
+      });
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const applyAiResponse = () => {
+    if (!aiSuggestion) return;
+    
+    setNewResponse(aiSuggestion.responseText);
+    if (aiSuggestion.suggestedStatus && aiSuggestion.suggestedStatus !== 'keep') {
+      setNewStatus(aiSuggestion.suggestedStatus);
+    }
+
+    toast({
+      title: 'Applied',
+      description: 'AI response has been loaded. Review and edit as needed.',
+    });
   };
 
   const handleUpdateStatus = async () => {
@@ -267,6 +331,14 @@ export default function AdminComplaintDetail() {
           timestamp: new Date(response.created_at).toLocaleString(),
           isActive: true,
         });
+      } else if (response.type === 'feedback_unsatisfied') {
+        events.push({
+          icon: 'message',
+          title: 'Student Provided Feedback (Unsatisfied)',
+          description: response.message,
+          timestamp: new Date(response.created_at).toLocaleString(),
+          isActive: true,
+        });
       } else if (response.type === 'public') {
         events.push({
           icon: 'message',
@@ -401,6 +473,18 @@ export default function AdminComplaintDetail() {
                         Close Requested
                       </Badge>
                     )}
+                    {complaint.satisfaction === 'satisfied' && (
+                      <Badge variant="outline" className="border-green-600 text-green-600 gap-1">
+                        <ThumbsUp className="h-3 w-3" />
+                        Satisfied
+                      </Badge>
+                    )}
+                    {complaint.satisfaction === 'unsatisfied' && (
+                      <Badge variant="outline" className="border-destructive text-destructive gap-1">
+                        <ThumbsDown className="h-3 w-3" />
+                        Not Satisfied
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     Created on: {new Date(complaint.created_at).toLocaleString()} | 
@@ -485,6 +569,64 @@ export default function AdminComplaintDetail() {
               </CardContent>
             </Card>
 
+            {/* Student Feedback Card */}
+            {responses.some(r => r.type === 'feedback_unsatisfied') && (
+              <Card className="gradient-card border-destructive/30 bg-gradient-to-br from-destructive/5 to-background">
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center gap-2 text-destructive">
+                    <ThumbsDown className="h-5 w-5" />
+                    Student Feedback (Unsatisfied)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {responses
+                    .filter(r => r.type === 'feedback_unsatisfied')
+                    .reverse()
+                    .map((feedback, idx) => (
+                      <div key={idx} className="mb-3 last:mb-0">
+                        <p className="whitespace-pre-wrap leading-relaxed mb-2">{feedback.message}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(feedback.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Attachments Card */}
+            {complaint.attachments && complaint.attachments.length > 0 && (
+              <Card className="gradient-card border-border/50">
+                <CardHeader>
+                  <CardTitle className="text-xl">Attachments</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {complaint.attachments.map((url: string, idx: number) => {
+                      const isImage = url.match(/\.(jpg|jpeg|png|webp)$/i);
+                      const isPdf = url.match(/\.pdf$/i);
+                      const isVideo = url.match(/\.mp4$/i);
+                      
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedAttachment(url)}
+                          className="flex flex-col items-center gap-2 p-3 border border-border rounded-lg hover:bg-accent transition-colors"
+                        >
+                          {isImage && <ImageIcon className="h-8 w-8 text-muted-foreground" />}
+                          {isPdf && <FileText className="h-8 w-8 text-muted-foreground" />}
+                          {isVideo && <Video className="h-8 w-8 text-muted-foreground" />}
+                          <span className="text-xs text-muted-foreground truncate max-w-full">
+                            {isImage ? 'Image' : isPdf ? 'PDF' : 'Video'} {idx + 1}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Latest Admin Response Card */}
             <Card className="gradient-card border-border/50">
               <CardHeader>
@@ -546,6 +688,58 @@ export default function AdminComplaintDetail() {
                       <SelectItem value="Critical">Critical</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-semibold flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      AI Response Generator
+                    </Label>
+                    <Select value={selectedTone} onValueChange={setSelectedTone}>
+                      <SelectTrigger className="w-[120px] h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Formal">Formal</SelectItem>
+                        <SelectItem value="Friendly">Friendly</SelectItem>
+                        <SelectItem value="Strict">Strict</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <Button
+                    onClick={handleAiGenerate}
+                    disabled={aiLoading}
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-2 border-primary/30 hover:bg-primary/10"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    {aiLoading ? 'Generating...' : 'Generate Response with AI'}
+                  </Button>
+
+                  {aiSuggestion && (
+                    <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
+                      <p className="text-xs font-semibold text-primary">AI Suggested Response:</p>
+                      <p className="text-sm whitespace-pre-wrap">{aiSuggestion.responseText}</p>
+                      {aiSuggestion.suggestedStatus && aiSuggestion.suggestedStatus !== 'keep' && (
+                        <p className="text-xs text-muted-foreground">
+                          Suggested Status: <span className="font-semibold">{aiSuggestion.suggestedStatus}</span>
+                        </p>
+                      )}
+                      <Button
+                        onClick={applyAiResponse}
+                        size="sm"
+                        variant="outline"
+                        className="w-full mt-2"
+                      >
+                        Use this Response
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 <Separator />
@@ -628,6 +822,28 @@ export default function AdminComplaintDetail() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Attachment Viewer Dialog */}
+        <Dialog open={!!selectedAttachment} onOpenChange={() => setSelectedAttachment(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle>Attachment</DialogTitle>
+            </DialogHeader>
+            {selectedAttachment && (
+              <div className="flex items-center justify-center">
+                {selectedAttachment.match(/\.(jpg|jpeg|png|webp)$/i) ? (
+                  <img src={selectedAttachment} alt="Attachment" className="max-w-full rounded-lg" />
+                ) : selectedAttachment.match(/\.pdf$/i) ? (
+                  <iframe src={selectedAttachment} className="w-full h-[70vh]" title="PDF Viewer" />
+                ) : selectedAttachment.match(/\.mp4$/i) ? (
+                  <video src={selectedAttachment} controls className="max-w-full rounded-lg" />
+                ) : (
+                  <p className="text-muted-foreground">Unable to preview this file type</p>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

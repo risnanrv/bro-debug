@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, RefreshCw, MessageCircle, XCircle, RotateCcw, Bell, LogOut, User } from 'lucide-react';
+import { ArrowLeft, RefreshCw, MessageCircle, XCircle, RotateCcw, Bell, LogOut, User, ThumbsUp, ThumbsDown, FileText, Image as ImageIcon, Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ComplaintTimeline from '@/components/ComplaintTimeline';
 import brototypeLogo from '@/assets/brototype-logo-new.png';
@@ -33,6 +33,9 @@ export default function ComplaintDetail() {
   const [showCloseDialog, setShowCloseDialog] = useState(false);
   const [clarificationMessage, setClarificationMessage] = useState('');
   const [closeNote, setCloseNote] = useState('');
+  const [showSatisfactionDialog, setShowSatisfactionDialog] = useState(false);
+  const [satisfactionFeedback, setSatisfactionFeedback] = useState('');
+  const [selectedAttachment, setSelectedAttachment] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -155,6 +158,81 @@ export default function ComplaintDetail() {
 
     setClarificationMessage('');
     setShowClarificationDialog(false);
+    fetchNotes();
+  };
+
+  const handleSatisfactionResponse = async (satisfied: boolean) => {
+    if (!satisfied && !satisfactionFeedback.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please share why you are not satisfied',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Set satisfaction
+    const { error: satError } = await supabase
+      .from('complaints')
+      .update({ satisfaction: satisfied ? 'satisfied' : 'unsatisfied' })
+      .eq('id', id);
+
+    if (satError) {
+      toast({
+        title: 'Error',
+        description: satError.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!satisfied) {
+      // Insert feedback note
+      const { error: noteError } = await supabase.from('resolution_notes').insert({
+        complaint_id: id,
+        admin_id: user?.id,
+        type: 'feedback_unsatisfied',
+        message: satisfactionFeedback,
+      });
+
+      if (noteError) {
+        toast({
+          title: 'Error',
+          description: noteError.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Reopen complaint
+      const { error: reopenError } = await supabase
+        .from('complaints')
+        .update({ status: 'In Progress' })
+        .eq('id', id);
+
+      if (reopenError) {
+        toast({
+          title: 'Error',
+          description: reopenError.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      toast({
+        title: 'Feedback submitted',
+        description: 'Your complaint has been reopened for further review',
+      });
+    } else {
+      toast({
+        title: 'Thank you',
+        description: 'Your feedback has been recorded',
+      });
+    }
+
+    setSatisfactionFeedback('');
+    setShowSatisfactionDialog(false);
+    fetchComplaint();
     fetchNotes();
   };
 
@@ -491,6 +569,39 @@ export default function ComplaintDetail() {
               </CardContent>
             </Card>
 
+            {/* Attachments Card */}
+            {complaint.attachments && complaint.attachments.length > 0 && (
+              <Card className="border-border/50">
+                <CardHeader>
+                  <CardTitle className="text-lg">Attachments</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-3">
+                    {complaint.attachments.map((url: string, idx: number) => {
+                      const isImage = url.match(/\.(jpg|jpeg|png|webp)$/i);
+                      const isPdf = url.match(/\.pdf$/i);
+                      const isVideo = url.match(/\.mp4$/i);
+                      
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedAttachment(url)}
+                          className="flex flex-col items-center gap-2 p-3 border border-border rounded-lg hover:bg-accent transition-colors"
+                        >
+                          {isImage && <ImageIcon className="h-8 w-8 text-muted-foreground" />}
+                          {isPdf && <FileText className="h-8 w-8 text-muted-foreground" />}
+                          {isVideo && <Video className="h-8 w-8 text-muted-foreground" />}
+                          <span className="text-xs text-muted-foreground truncate max-w-full">
+                            {isImage ? 'Image' : isPdf ? 'PDF' : 'Video'} {idx + 1}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Admin Response Card */}
             <Card className="border-border/50">
               <CardHeader>
@@ -518,6 +629,36 @@ export default function ComplaintDetail() {
             </Card>
           </div>
         </div>
+
+        {/* Satisfaction Feedback Prompt */}
+        {(complaint.status === 'Resolved' || complaint.status === 'Closed') && !complaint.satisfaction && (
+          <>
+            <Separator className="my-8" />
+            <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-background">
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-semibold mb-3">Are you satisfied with how this complaint was handled?</h3>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => handleSatisfactionResponse(true)}
+                    variant="outline"
+                    className="flex-1 gap-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
+                  >
+                    <ThumbsUp className="h-4 w-4" />
+                    Yes, I'm satisfied
+                  </Button>
+                  <Button
+                    onClick={() => setShowSatisfactionDialog(true)}
+                    variant="outline"
+                    className="flex-1 gap-2 border-destructive text-destructive hover:bg-destructive hover:text-white"
+                  >
+                    <ThumbsDown className="h-4 w-4" />
+                    No, I'm not satisfied
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
 
         {/* Quick Action Buttons */}
         <Separator className="my-8" />
@@ -635,6 +776,55 @@ export default function ComplaintDetail() {
               Send Close Request
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Satisfaction Feedback Dialog */}
+      <Dialog open={showSatisfactionDialog} onOpenChange={setShowSatisfactionDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Help us improve</DialogTitle>
+            <DialogDescription>
+              Please share why you're not satisfied with how this complaint was handled.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            placeholder="Tell us what went wrong or what could be improved..."
+            value={satisfactionFeedback}
+            onChange={(e) => setSatisfactionFeedback(e.target.value)}
+            className="min-h-[150px]"
+            required
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSatisfactionDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => handleSatisfactionResponse(false)}>
+              Submit Feedback
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Attachment Viewer Dialog */}
+      <Dialog open={!!selectedAttachment} onOpenChange={() => setSelectedAttachment(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Attachment</DialogTitle>
+          </DialogHeader>
+          {selectedAttachment && (
+            <div className="flex items-center justify-center">
+              {selectedAttachment.match(/\.(jpg|jpeg|png|webp)$/i) ? (
+                <img src={selectedAttachment} alt="Attachment" className="max-w-full rounded-lg" />
+              ) : selectedAttachment.match(/\.pdf$/i) ? (
+                <iframe src={selectedAttachment} className="w-full h-[70vh]" title="PDF Viewer" />
+              ) : selectedAttachment.match(/\.mp4$/i) ? (
+                <video src={selectedAttachment} controls className="max-w-full rounded-lg" />
+              ) : (
+                <p className="text-muted-foreground">Unable to preview this file type</p>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
