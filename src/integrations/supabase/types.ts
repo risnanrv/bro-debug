@@ -307,6 +307,7 @@ export type Database = {
         | "internal"
         | "clarification_request"
         | "close_request"
+        | "feedback_unsatisfied"
       priority: "Critical" | "Urgent" | "Normal"
       satisfaction: "satisfied" | "unsatisfied"
       user_role: "student" | "admin"
@@ -485,6 +486,7 @@ export const Constants = {
         "internal",
         "clarification_request",
         "close_request",
+        "feedback_unsatisfied",
       ],
       priority: ["Critical", "Urgent", "Normal"],
       satisfaction: ["satisfied", "unsatisfied"],

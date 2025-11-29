@@ -10,8 +10,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Bell, LogOut, User } from 'lucide-react';
+import { ArrowLeft, Bell, LogOut, User, Sparkles, Upload, X, FileText, Image as ImageIcon, Video } from 'lucide-react';
 import { z } from 'zod';
 import brototypeLogo from '@/assets/brototype-logo-new.png';
 
@@ -21,6 +22,20 @@ const complaintSchema = z.object({
   description: z.string().min(20, 'Description must be at least 20 characters').max(2000, 'Description too long'),
 });
 
+const categories = [
+  "Hostel / Accommodation",
+  "Mentor Behavior / Staff Attitude",
+  "Curriculum / Teaching",
+  "Batch Management",
+  "Laptop / Lab / Internet / Wi-Fi Issue",
+  "Payment / Finance",
+  "Food / Canteen",
+  "Mental Health / Harassment / Bullying",
+  "Miscommunication / Misleading Information",
+  "Personal Safety",
+  "Other"
+];
+
 export default function NewComplaint() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
@@ -28,6 +43,11 @@ export default function NewComplaint() {
   const [loading, setLoading] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [files, setFiles] = useState<File[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<any>(null);
+  const [aiInput, setAiInput] = useState('');
+  const [showAiPanel, setShowAiPanel] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -69,6 +89,136 @@ export default function NewComplaint() {
     return 'Normal';
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      const validFiles = newFiles.filter(file => {
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf', 'video/mp4'];
+        const maxSize = 25 * 1024 * 1024; // 25MB
+        
+        if (!validTypes.includes(file.type)) {
+          toast({
+            title: 'Invalid file type',
+            description: `${file.name} is not a supported file type`,
+            variant: 'destructive',
+          });
+          return false;
+        }
+        
+        if (file.size > maxSize) {
+          toast({
+            title: 'File too large',
+            description: `${file.name} exceeds 25MB limit`,
+            variant: 'destructive',
+          });
+          return false;
+        }
+        
+        return true;
+      });
+
+      if (files.length + validFiles.length > 5) {
+        toast({
+          title: 'Too many files',
+          description: 'Maximum 5 files allowed',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setFiles([...files, ...validFiles]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(files.filter((_, i) => i !== index));
+  };
+
+  const getFileIcon = (fileType: string) => {
+    if (fileType.startsWith('image/')) return <ImageIcon className="h-4 w-4" />;
+    if (fileType === 'application/pdf') return <FileText className="h-4 w-4" />;
+    if (fileType.startsWith('video/')) return <Video className="h-4 w-4" />;
+    return <FileText className="h-4 w-4" />;
+  };
+
+  const handleAiEnhance = async () => {
+    if (!aiInput.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please describe your issue first',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('enhance-complaint', {
+        body: { description: aiInput }
+      });
+
+      if (error) throw error;
+
+      setAiSuggestions(data);
+      toast({
+        title: 'AI Suggestions Ready',
+        description: 'Review and apply the suggestions below',
+      });
+    } catch (error: any) {
+      console.error('AI enhancement error:', error);
+      toast({
+        title: 'AI Enhancement Failed',
+        description: error.message || 'Failed to generate suggestions',
+        variant: 'destructive',
+      });
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const applyAiSuggestion = (field: 'title' | 'description' | 'category' | 'priority') => {
+    if (!aiSuggestions) return;
+
+    if (field === 'title') {
+      setFormData({ ...formData, title: aiSuggestions.title });
+    } else if (field === 'description') {
+      setFormData({ ...formData, description: aiSuggestions.description });
+    } else if (field === 'category') {
+      setFormData({ ...formData, category: aiSuggestions.category });
+    }
+
+    toast({
+      title: 'Applied',
+      description: `${field} has been updated`,
+    });
+  };
+
+  const uploadFiles = async (complaintId: string): Promise<string[]> => {
+    const uploadedUrls: string[] = [];
+
+    for (const file of files) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${complaintId}/${Date.now()}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('complaint-attachments')
+        .upload(`${user?.id}/${fileName}`, file);
+
+      if (error) {
+        console.error('File upload error:', error);
+        continue;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('complaint-attachments')
+        .getPublicUrl(`${user?.id}/${fileName}`);
+
+      uploadedUrls.push(publicUrl);
+    }
+
+    return uploadedUrls;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -77,6 +227,10 @@ export default function NewComplaint() {
       complaintSchema.parse(formData);
 
       const priority = detectPriority(formData.description);
+
+      // Create temp ID for file uploads
+      const tempId = crypto.randomUUID();
+      const attachmentUrls = files.length > 0 ? await uploadFiles(tempId) : [];
 
       const { error } = await supabase.from('complaints').insert({
         student_id: user?.id,
@@ -88,6 +242,7 @@ export default function NewComplaint() {
         description: formData.description,
         priority: priority as any,
         status: 'Pending' as any,
+        attachments: attachmentUrls.length > 0 ? attachmentUrls : null,
       });
 
       if (error) {
@@ -173,7 +328,7 @@ export default function NewComplaint() {
         </div>
       </nav>
 
-      <main className="container mx-auto px-4 py-12 max-w-3xl">
+      <main className="container mx-auto px-4 py-12 max-w-4xl">
         {/* Back Button */}
         <Button
           variant="outline"
@@ -183,6 +338,97 @@ export default function NewComplaint() {
           <ArrowLeft className="h-4 w-4" />
           Back to Dashboard
         </Button>
+
+        {/* AI Enhancement Panel */}
+        <Collapsible open={showAiPanel} onOpenChange={setShowAiPanel} className="mb-6">
+          <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-background">
+            <CardHeader>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full justify-between p-0 hover:bg-transparent">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-lg">AI Complaint Enhancer</CardTitle>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {showAiPanel ? 'Hide' : 'Show'}
+                  </span>
+                </Button>
+              </CollapsibleTrigger>
+            </CardHeader>
+            <CollapsibleContent>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Describe your issue in your own words</Label>
+                  <Textarea
+                    placeholder="E.g., The WiFi in hostel block B keeps disconnecting..."
+                    value={aiInput}
+                    onChange={(e) => setAiInput(e.target.value)}
+                    className="min-h-[100px]"
+                  />
+                </div>
+                
+                <Button onClick={handleAiEnhance} disabled={aiLoading} className="w-full gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  {aiLoading ? 'Generating...' : 'Generate Suggestions with AI'}
+                </Button>
+
+                {aiSuggestions && (
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <h4 className="font-semibold text-sm text-primary">AI Suggestions</h4>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <Label className="text-xs text-muted-foreground">Title</Label>
+                          <p className="text-sm mt-1">{aiSuggestions.title}</p>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={() => applyAiSuggestion('title')}>
+                          Apply
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <Label className="text-xs text-muted-foreground">Description</Label>
+                          <p className="text-sm mt-1">{aiSuggestions.description}</p>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={() => applyAiSuggestion('description')}>
+                          Apply
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Category</Label>
+                          <p className="text-sm mt-1">{aiSuggestions.category}</p>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={() => applyAiSuggestion('category')}>
+                          Apply
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Recommended Priority</Label>
+                      <Badge variant="outline">{aiSuggestions.priority}</Badge>
+                    </div>
+
+                    {aiSuggestions.suggestedSteps && (
+                      <div className="space-y-2 text-xs text-muted-foreground">
+                        <Label className="text-xs">Suggested Resolution Steps</Label>
+                        <p>{aiSuggestions.suggestedSteps}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
         <Card className="gradient-card border-border/50 shadow-xl">
           <CardHeader>
@@ -228,17 +474,9 @@ export default function NewComplaint() {
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Hostel / Accommodation">Hostel / Accommodation</SelectItem>
-                    <SelectItem value="Mentor Behavior / Staff Attitude">Mentor Behavior / Staff Attitude</SelectItem>
-                    <SelectItem value="Curriculum / Teaching">Curriculum / Teaching</SelectItem>
-                    <SelectItem value="Batch Management">Batch Management</SelectItem>
-                    <SelectItem value="Laptop / Lab / Internet / Wi-Fi Issue">Laptop / Lab / Internet / Wi-Fi Issue</SelectItem>
-                    <SelectItem value="Payment / Finance">Payment / Finance</SelectItem>
-                    <SelectItem value="Food / Canteen">Food / Canteen</SelectItem>
-                    <SelectItem value="Mental Health / Harassment / Bullying">Mental Health / Harassment / Bullying</SelectItem>
-                    <SelectItem value="Miscommunication / Misleading Information">Miscommunication / Misleading Information</SelectItem>
-                    <SelectItem value="Personal Safety">Personal Safety</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                    {categories.map(cat => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -269,6 +507,52 @@ export default function NewComplaint() {
                 <p className="text-xs text-muted-foreground">
                   Priority will be auto-detected based on keywords in your description
                 </p>
+              </div>
+
+              {/* Attachments */}
+              <div className="space-y-2">
+                <Label>Attachments (optional)</Label>
+                <div className="border-2 border-dashed border-border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-center">
+                    <label className="cursor-pointer">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                        <Upload className="h-4 w-4" />
+                        <span>Click to upload files (max 5)</span>
+                      </div>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf,video/mp4"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Supported: Images (JPG, PNG, WEBP), PDF, Video (MP4) • Max 25MB per file
+                  </p>
+                  
+                  {files.length > 0 && (
+                    <div className="space-y-2 pt-2">
+                      {files.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between bg-secondary/20 rounded p-2">
+                          <div className="flex items-center gap-2">
+                            {getFileIcon(file.type)}
+                            <span className="text-sm truncate max-w-[200px]">{file.name}</span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeFile(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex gap-4">
