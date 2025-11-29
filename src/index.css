@@ -65,12 +65,28 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-feature-settings: 'cv11', 'ss01';
+    font-family: 'Avenir', 'Avenir Next', -apple-system, BlinkMacSystemFont, 'Helvetica', 'Arial', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold tracking-tight;
+    font-weight: 800;
+  }
+  
+  strong, .font-heavy {
+    font-weight: 800;
+  }
+  
+  .font-medium {
+    font-weight: 500;
+  }
+  
+  .font-regular {
+    font-weight: 400;
+  }
+  
+  .font-light {
+    font-weight: 300;
   }
   
   h1 {
@@ -101,5 +117,20 @@ All colors MUST be HSL.
   
   .text-gradient {
     @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
+  }
+  
+  .logo-size {
+    width: 150px;
+    height: 160px;
+    object-fit: contain;
+  }
+  
+  @media (max-width: 768px) {
+    .logo-size {
+      max-width: 110px;
+      max-height: 120px;
+      width: auto;
+      height: auto;
+    }
   }
 }
