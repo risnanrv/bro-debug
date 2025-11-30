@@ -51,6 +51,7 @@ export default function AdminComplaintDetail() {
   const [aiSuggestion, setAiSuggestion] = useState<any>(null);
   const [selectedTone, setSelectedTone] = useState('Formal');
   const [selectedAttachment, setSelectedAttachment] = useState<string | null>(null);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!loading && profile?.role !== 'admin') {
@@ -64,6 +65,33 @@ export default function AdminComplaintDetail() {
       fetchResponses();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (complaint?.attachments && complaint.attachments.length > 0) {
+      generateSignedUrls();
+    }
+  }, [complaint?.attachments]);
+
+  const generateSignedUrls = async () => {
+    if (!complaint?.attachments) return;
+    
+    const urls: Record<string, string> = {};
+    for (const attachment of complaint.attachments) {
+      // Extract the path from the URL if it's a full URL
+      const path = attachment.includes('complaint-attachments/') 
+        ? attachment.split('complaint-attachments/')[1].split('?')[0]
+        : attachment;
+      
+      const { data, error } = await supabase.storage
+        .from('complaint-attachments')
+        .createSignedUrl(path, 3600); // 1 hour expiry
+      
+      if (!error && data) {
+        urls[attachment] = data.signedUrl;
+      }
+    }
+    setSignedUrls(urls);
+  };
 
   const fetchStudentProfile = async (studentId: string) => {
     const { data, error } = await supabase
@@ -606,19 +634,32 @@ export default function AdminComplaintDetail() {
                       const isImage = url.match(/\.(jpg|jpeg|png|webp)$/i);
                       const isPdf = url.match(/\.pdf$/i);
                       const isVideo = url.match(/\.mp4$/i);
+                      const signedUrl = signedUrls[url] || url;
                       
                       return (
                         <button
                           key={idx}
-                          onClick={() => setSelectedAttachment(url)}
-                          className="flex flex-col items-center gap-2 p-3 border border-border rounded-lg hover:bg-accent transition-colors"
+                          onClick={() => setSelectedAttachment(signedUrl)}
+                          className="group relative overflow-hidden border border-border rounded-lg hover:border-primary transition-colors"
                         >
-                          {isImage && <ImageIcon className="h-8 w-8 text-muted-foreground" />}
-                          {isPdf && <FileText className="h-8 w-8 text-muted-foreground" />}
-                          {isVideo && <Video className="h-8 w-8 text-muted-foreground" />}
-                          <span className="text-xs text-muted-foreground truncate max-w-full">
-                            {isImage ? 'Image' : isPdf ? 'PDF' : 'Video'} {idx + 1}
-                          </span>
+                          {isImage ? (
+                            <div className="aspect-square">
+                              <img 
+                                src={signedUrl} 
+                                alt={`Attachment ${idx + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                            </div>
+                          ) : (
+                            <div className="aspect-square flex flex-col items-center justify-center gap-2 p-3">
+                              {isPdf && <FileText className="h-12 w-12 text-muted-foreground" />}
+                              {isVideo && <Video className="h-12 w-12 text-muted-foreground" />}
+                              <span className="text-xs text-muted-foreground text-center">
+                                {isPdf ? 'PDF' : 'Video'} {idx + 1}
+                              </span>
+                            </div>
+                          )}
                         </button>
                       );
                     })}
