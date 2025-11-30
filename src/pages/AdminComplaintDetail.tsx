@@ -693,6 +693,14 @@ export default function AdminComplaintDetail() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Chat Conversation Section */}
+            <ChatContainer
+              complaintId={id!}
+              currentUserId={user!.id}
+              currentUserRole="admin"
+              currentUserName={profile!.full_name}
+            />
           </div>
 
           {/* Right Column - Update Panel */}
@@ -835,16 +843,6 @@ export default function AdminComplaintDetail() {
                 </Button>
               </CardContent>
             </Card>
-
-            {/* Chat Conversation Section */}
-            <div className="mt-6">
-              <ChatContainer
-                complaintId={id!}
-                currentUserId={user!.id}
-                currentUserRole="admin"
-                currentUserName={profile!.full_name}
-              />
-            </div>
           </div>
         </div>
 
