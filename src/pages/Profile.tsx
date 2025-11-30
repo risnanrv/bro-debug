@@ -155,26 +155,16 @@ export default function Profile() {
       {/* Unified Navbar */}
       <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => navigate('/dashboard')}
-              className="hover:opacity-80 transition-opacity"
-            >
-              <img 
-                src={brototypeLogo} 
-                alt="Brototype" 
-                className="logo-size pl-3 pt-1"
-              />
-            </button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/dashboard')}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden md:inline">Back to Dashboard</span>
-            </Button>
-          </div>
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="hover:opacity-80 transition-opacity"
+          >
+            <img 
+              src={brototypeLogo} 
+              alt="Brototype" 
+              className="logo-size pl-3 pt-1"
+            />
+          </button>
           
           <div className="flex items-center gap-4">
             <Button
@@ -215,7 +205,15 @@ export default function Profile() {
         </div>
       </nav>
 
-      <main className="container mx-auto px-4 py-12 max-w-3xl">
+      <main className="container mx-auto px-4 py-8 max-w-3xl">
+        <Button
+          variant="outline"
+          onClick={() => navigate('/dashboard')}
+          className="mb-6 gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Button>
         <Card className="gradient-card border-border/50 shadow-xl">
           <CardHeader>
             <CardTitle className="text-3xl">Profile <span className="text-primary">Settings</span></CardTitle>
