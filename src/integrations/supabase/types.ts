@@ -67,6 +67,57 @@ export type Database = {
         }
         Relationships: []
       }
+      complaint_messages: {
+        Row: {
+          complaint_id: string
+          content: string
+          created_at: string
+          id: string
+          message_type: Database["public"]["Enums"]["message_type"]
+          read_by_admin: boolean
+          read_by_student: boolean
+          sender_id: string
+          sender_role: Database["public"]["Enums"]["sender_role"]
+        }
+        Insert: {
+          complaint_id: string
+          content: string
+          created_at?: string
+          id?: string
+          message_type?: Database["public"]["Enums"]["message_type"]
+          read_by_admin?: boolean
+          read_by_student?: boolean
+          sender_id: string
+          sender_role: Database["public"]["Enums"]["sender_role"]
+        }
+        Update: {
+          complaint_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          message_type?: Database["public"]["Enums"]["message_type"]
+          read_by_admin?: boolean
+          read_by_student?: boolean
+          sender_id?: string
+          sender_role?: Database["public"]["Enums"]["sender_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "complaint_messages_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "complaint_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       complaints: {
         Row: {
           attachments: string[] | null
@@ -301,6 +352,7 @@ export type Database = {
         | "Coimbatore"
         | "Chennai"
         | "Other"
+      message_type: "text" | "system"
       mode: "Offline" | "Online"
       note_type:
         | "public"
@@ -310,6 +362,7 @@ export type Database = {
         | "feedback_unsatisfied"
       priority: "Critical" | "Urgent" | "Normal"
       satisfaction: "satisfied" | "unsatisfied"
+      sender_role: "student" | "admin"
       user_role: "student" | "admin"
     }
     CompositeTypes: {
@@ -480,6 +533,7 @@ export const Constants = {
         "Chennai",
         "Other",
       ],
+      message_type: ["text", "system"],
       mode: ["Offline", "Online"],
       note_type: [
         "public",
@@ -490,6 +544,7 @@ export const Constants = {
       ],
       priority: ["Critical", "Urgent", "Normal"],
       satisfaction: ["satisfied", "unsatisfied"],
+      sender_role: ["student", "admin"],
       user_role: ["student", "admin"],
     },
   },

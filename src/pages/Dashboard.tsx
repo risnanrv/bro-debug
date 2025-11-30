@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [complaints, setComplaints] = useState<any[]>([]);
   const [loadingComplaints, setLoadingComplaints] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!loading && !user) {
@@ -27,6 +28,7 @@ export default function Dashboard() {
     if (user) {
       fetchComplaints();
       fetchUnreadCount();
+      fetchUnreadMessages();
     }
   }, [user]);
 
@@ -57,6 +59,31 @@ export default function Dashboard() {
       const readIds = new Set(reads.map((r) => r.announcement_id));
       const unread = announcements.filter((a) => !readIds.has(a.id)).length;
       setUnreadCount(unread);
+    }
+  };
+
+  const fetchUnreadMessages = async () => {
+    const { data: userComplaints } = await supabase
+      .from('complaints')
+      .select('id')
+      .eq('student_id', user?.id);
+
+    if (!userComplaints) return;
+
+    const complaintIds = userComplaints.map(c => c.id);
+    const { data: messages } = await supabase
+      .from('complaint_messages')
+      .select('complaint_id')
+      .in('complaint_id', complaintIds)
+      .eq('sender_role', 'admin')
+      .eq('read_by_student', false);
+
+    if (messages) {
+      const counts: Record<string, number> = {};
+      messages.forEach(msg => {
+        counts[msg.complaint_id] = (counts[msg.complaint_id] || 0) + 1;
+      });
+      setUnreadMessages(counts);
     }
   };
 
@@ -209,7 +236,14 @@ export default function Dashboard() {
                     >
                       <CardContent className="pt-6">
                         <div className="flex items-start justify-between mb-4">
-                          <h3 className="font-bold text-xl flex-1">{complaint.title}</h3>
+                          <div className="flex-1 flex items-start gap-2">
+                            <h3 className="font-bold text-xl">{complaint.title}</h3>
+                            {unreadMessages[complaint.id] && (
+                              <Badge variant="destructive" className="rounded-full px-2 py-0.5 text-xs">
+                                {unreadMessages[complaint.id]} new
+                              </Badge>
+                            )}
+                          </div>
                           <div className="flex gap-2 flex-shrink-0 ml-4">
                             <Badge
                               variant="outline"

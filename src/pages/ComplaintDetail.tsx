@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, RefreshCw, MessageCircle, XCircle, RotateCcw, Bell, LogOut, User, ThumbsUp, ThumbsDown, FileText, Image as ImageIcon, Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ComplaintTimeline from '@/components/ComplaintTimeline';
+import { ChatContainer } from '@/components/chat/ChatContainer';
 import brototypeLogo from '@/assets/brototype-logo-new.png';
 
 export default function ComplaintDetail() {
@@ -762,6 +763,16 @@ export default function ComplaintDetail() {
               Reopen Complaint
             </Button>
           )}
+        </div>
+
+        {/* Chat Conversation Section */}
+        <div className="mt-8">
+          <ChatContainer
+            complaintId={id!}
+            currentUserId={user!.id}
+            currentUserRole="student"
+            currentUserName={profile!.full_name}
+          />
         </div>
       </main>
 

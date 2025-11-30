@@ -34,6 +34,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
   const [searchQuery, setSearchQuery] = useState('');
   const [quickFilter, setQuickFilter] = useState<string | null>(null);
+  const [unreadMessages, setUnreadMessages] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!loading && !user) {
@@ -46,6 +47,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (user && profile?.role === 'admin') {
       fetchComplaints();
+      fetchUnreadMessages();
     }
   }, [user, profile, filters]);
 
@@ -109,6 +111,22 @@ export default function AdminDashboard() {
       });
     }
     setLoadingComplaints(false);
+  };
+
+  const fetchUnreadMessages = async () => {
+    const { data: messages } = await supabase
+      .from('complaint_messages')
+      .select('complaint_id')
+      .eq('sender_role', 'student')
+      .eq('read_by_admin', false);
+
+    if (messages) {
+      const counts: Record<string, number> = {};
+      messages.forEach(msg => {
+        counts[msg.complaint_id] = (counts[msg.complaint_id] || 0) + 1;
+      });
+      setUnreadMessages(counts);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -478,7 +496,14 @@ export default function AdminDashboard() {
                       <CardContent className="pt-6">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
-                            <h3 className="font-bold text-xl mb-1">{complaint.title}</h3>
+                            <div className="flex items-start gap-2 mb-1">
+                              <h3 className="font-bold text-xl">{complaint.title}</h3>
+                              {unreadMessages[complaint.id] && (
+                                <Badge variant="destructive" className="rounded-full px-2 py-0.5 text-xs">
+                                  {unreadMessages[complaint.id]} new
+                                </Badge>
+                              )}
+                            </div>
                             <p className="text-sm text-muted-foreground">
                               By: <span className="font-medium">{complaint.student_name_cached}</span>
                             </p>
