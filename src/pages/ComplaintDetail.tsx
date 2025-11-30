@@ -853,19 +853,26 @@ export default function ComplaintDetail() {
           <DialogHeader>
             <DialogTitle>Attachment</DialogTitle>
           </DialogHeader>
-          {selectedAttachment && (
-            <div className="flex items-center justify-center">
-              {selectedAttachment.match(/\.(jpg|jpeg|png|webp)$/i) ? (
-                <img src={selectedAttachment} alt="Attachment" className="max-w-full rounded-lg" />
-              ) : selectedAttachment.match(/\.pdf$/i) ? (
-                <iframe src={selectedAttachment} className="w-full h-[70vh]" title="PDF Viewer" />
-              ) : selectedAttachment.match(/\.mp4$/i) ? (
-                <video src={selectedAttachment} controls className="max-w-full rounded-lg" />
-              ) : (
-                <p className="text-muted-foreground">Unable to preview this file type</p>
-              )}
-            </div>
-          )}
+          {selectedAttachment && (() => {
+            const originalUrl = Object.keys(signedUrls).find(key => signedUrls[key] === selectedAttachment) || selectedAttachment;
+            const isImage = /\.(jpg|jpeg|png|webp)$/i.test(originalUrl);
+            const isPdf = /\.pdf$/i.test(originalUrl);
+            const isVideo = /\.mp4$/i.test(originalUrl);
+            
+            return (
+              <div className="flex items-center justify-center">
+                {isImage ? (
+                  <img src={selectedAttachment} alt="Attachment" className="max-w-full rounded-lg" />
+                ) : isPdf ? (
+                  <iframe src={selectedAttachment} className="w-full h-[70vh]" title="PDF Viewer" />
+                ) : isVideo ? (
+                  <video src={selectedAttachment} controls className="max-w-full rounded-lg" />
+                ) : (
+                  <p className="text-muted-foreground">Unable to preview this file type</p>
+                )}
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>
