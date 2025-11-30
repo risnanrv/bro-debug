@@ -31,6 +31,7 @@ import { ArrowLeft, Calendar, User, MapPin, GraduationCap, MessageSquare, Bell, 
 import { useToast } from '@/hooks/use-toast';
 import ComplaintTimeline, { TimelineEvent } from '@/components/ComplaintTimeline';
 import { formatDistanceToNow } from 'date-fns';
+import { ChatContainer } from '@/components/chat/ChatContainer';
 import brototypeLogo from '@/assets/brototype-logo-new.png';
 
 export default function AdminComplaintDetail() {
@@ -834,6 +835,16 @@ export default function AdminComplaintDetail() {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Chat Conversation Section */}
+            <div className="mt-6">
+              <ChatContainer
+                complaintId={id!}
+                currentUserId={user!.id}
+                currentUserRole="admin"
+                currentUserName={profile!.full_name}
+              />
+            </div>
           </div>
         </div>
 
